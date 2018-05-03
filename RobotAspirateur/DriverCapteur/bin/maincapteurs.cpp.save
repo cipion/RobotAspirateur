@@ -1,0 +1,322 @@
+#include "log.h"
+#include "gestioncapteurs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <cstring>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <regex>
+#include <signal.h>
+
+#define PORT 1201
+
+/******
+*
+*	Programme de pilotage des 2 moteurs pas à pas pour faire avancer le robot aspirateur
+*	les fichiers sources et le programme compilé sont dans le dossier binary_function
+*	
+*	Le driver recoit des commande via des sockets, on peut demander de faire tourner les moteur en fonction :
+*	- une vitesse entre -100 et 0 pour la marche arriere ou entre 0 et 100 pour la marche avant (c'est un pourcentage)
+*	- une direction, entre -100 et 1 pour tourner à gauche OU entre 1 et 100 pour tourner à droite (0 = tout droit)
+*	- un nombre de pas, si > à 0 le moteur fera le nombre de pas indiqué sinon si = à 0 le moteurs tournent à l'infinie
+*
+*	la configuration du host et du port de connexion au serveur de socket se trouve dans le fichier de configuration DriverMoteur.properties du dossier "config"
+*	le message à envoyer au serveur est sous la forme : COMMANDE;VITESSE;DIRECTION;NBPAS
+*	- COMMANDE = start, stop ou rotation
+*	- VITESSE = -100 à 100
+*	- DIRECTION = -100 à 100
+*	- NBPAS = 0 à valeur max int
+*
+*	Commande pour conpiler le programme :
+*	g++ -std=c++11 -lwiringPi -lpthread  maincapteurs.cpp log.cpp config.cpp gestioncapteurs.cpp libSonar.cpp -o CapteurRobotAspirateur
+*
+********/
+
+
+using namespace std;
+
+//Drapeau d'arrêt du programme. Sa valeur d'origine est 0. pour l'instant c'est pas utile
+unsigned short stop = 0;
+
+// le coeur du programme, c'est l'objet qui commande le GPIO pour faire tourner les moteurs en fonction de vitesse, direction, nb de pas
+GestionCapteurs capteur;
+
+/***********************************
+* Fonction de reception des signaux.
+* Si le signal reçu est SIGINT Ctl^c, alors arrete la commande du GPIO et on quitte le programme.
+* 
+************************************/
+
+void signalHandler(int signal){
+	Log log;
+	
+
+	if(signal==SIGINT){
+		
+		log.info("signalHandler : Signal Ctrl^c reçu\n");
+		stop=1;
+		capteur.stopDetection();
+		exit(0);
+	}
+}
+
+
+/******************
+* Fonction main qui initialise le driver, lance le serveur de socket, et gere les commande recu via les socket pour piloter le driver
+*
+*
+********************/
+int main(int argc, char *argv[])
+{
+    // Fonction pour afficher et enregister les log
+    Log log;
+	
+    // variable permetant de faire une boucle pour ecouter les demande de connexion client via les socket
+    bool run=true;
+	
+	// le bordel pour le serveur de socket, fuyez pauvre fou
+    int sockfd, newsockfd, portno;
+    socklen_t client;
+    char buffer[256];
+    struct sockaddr_in serv_addr, cli_addr;
+	
+	// pour le debug
+    int n, i, j=0;
+	
+	// message de reception et emission du client socket
+    string message, retourClient;
+	
+	// tableau pour stocker les commande cliente parametres[0] = commande, parametres[1] = vitesse, parametres[2] = direction, parametres[3] = nb de pas 
+    string parametres[2];
+	
+	// regex pour valider le bon format de la commande
+    regex const pattern { "^[a-zA-Z]\{0,4}[;]\{0,1}[0-9]\{0,1}$" };
+
+    log.info("main : Debut du programme");
+    log.space();
+	
+
+	/**********************************************************
+	MISE EN PLACE DE LA GESTION DU SIGNAL CONTROL^C (SIGINT)
+	Pas touche ca fonctionne !!!!!!!!!!!!!!!!!
+	**********************************************************/
+	//Structure pour l'enregistrement d'une action déclenchée lors de la reception d'un signal.
+	struct sigaction action, oldAction;
+ 
+	action.sa_handler = signalHandler;	//La fonction qui sera appellé est signalHandler
+ 
+	//On vide la liste des signaux bloqués pendant le traitement
+	//C'est à dire que si n'importe quel signal (à part celui qui est traité)
+	//est declenché pendant le traitement, ce traitement sera pris en compte.
+	sigemptyset(&action.sa_mask);
+ 
+	//Redémarrage automatique Des appels systêmes lents interrompus par l'arrivée du signal.
+	action.sa_flags = SA_RESTART;
+ 
+	//Mise en place de l'action pour le signal SIGINT, l'ancienne action est sauvegardé dans oldAction
+	sigaction(SIGINT, &action, &oldAction);
+	/*************************** Fin de pas touche ******************************/
+
+	
+	
+	
+    log.info("main : création du socket");
+	
+	/********************************
+	Demarrage du serveur de socket
+	*******************************/
+    // socket(int domain, int type, int protocol)
+    sockfd =  socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+        log.erreur("main : erreur d'ouverture du socket");
+
+    log.info("main : reset de la structure adresse");
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+
+    log.info("main : numero de port =" + to_string(PORT));
+    portno = PORT;
+
+    log.info("main : creation de la structure host_addr pour utiliser la fonction bind");
+    // server byte order
+    serv_addr.sin_family = AF_INET;
+
+    log.info("main : implementation de l'adresse IP local");
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+
+    // convert short integer value for port must be converted into network byte order
+    serv_addr.sin_port = htons(portno);
+
+    // bind(int fd, struct sockaddr *local_addr, socklen_t addr_length)
+    // bind() passes file descriptor, the address structure,
+    // and the length of the address structure
+    // This bind() call will bind  the socket to the current IP address on port, portno
+    log.info("main : Bind la socket, l'adresse IP et le porto");
+    //bind  the socket to the current IP address on port, portn
+    if (bind(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
+	{
+        log.erreur("main : ERROR on binding");
+		exit(1);
+	}
+	/*********************** fin de lancement du serveur de socket ***************/
+   
+
+
+
+
+
+	/**********************
+	Boucle de traitement des connexion client
+	
+	**************************/
+
+
+    while (!stop)
+	{
+		// This listen() call tells the socket to listen to the incoming connections.
+		// The listen() function places all incoming connection into a backlog queue
+		// until accept() call accepts the connection.
+		// Here, we set the maximum size for the backlog queue to 5.
+		log.info("main : place les connexions entrante dans une queue");
+		listen(sockfd,5);
+	
+		// The accept() call actually accepts an incoming connection
+		client = sizeof(cli_addr);
+		// This accept() function will write the connecting client's address info
+		// into the the address structure and the size of that structure is clien.
+		// The accept() returns a new socket file descriptor for the accepted connection.
+		// So, the original socket file descriptor can continue to be used
+		// for accepting new connections while the new socker file descriptor is used for
+		// communicating with the connected client.
+		log.info("main : En attente de connexion d'un client ...");
+		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &client);
+		
+		if (newsockfd < 0)
+			log.erreur("main : ERROR on accept");
+		log.info("main : Client accepté");
+		// log.info("main: got connection from " + inet_ntoa(cli_addr.sin_addr) + " port " + ntohs(cli_addr.sin_port));
+		run=true;
+
+		/************
+		Boucle de reception des commandes du client connecté
+		s'il se deconnect on attend une nouvelle connexion
+		***************/
+		
+		while(run)
+		{
+		
+			memset(buffer, 0, 256);
+			
+			
+			//n = read(newsockfd,buffer,255);
+			n = recv(newsockfd,buffer,255, 0);
+			message = string(buffer);
+			//log.info("main : message client ='" + message + "', j=" + to_string(j) + ", n=" + to_string(n));
+			
+			if (n < 0 )
+				log.erreur("main : ERROR reading from socket j=" + to_string(j));
+			else if (n != 0)
+			{
+			
+				
+				//message.erase(message.size()-1,1);
+				
+				
+				log.info("main : commande du client='" + message + "'");
+		
+		
+				
+				if(regex_match(message, pattern))
+				{
+					log.info("main : la regex est valide");
+					
+					i=0;
+					parametres[1]="";
+					char *token = strtok(buffer, ";");
+					while (token != NULL && i < 2) {
+						parametres[i]= token;
+						token = strtok(NULL, ";");
+						i++;
+					}
+					
+					
+					
+					log.info("main : Commande = '" + parametres[0] +"' avec timeout = " + parametres[1] );
+					
+					if (parametres[0] == "GET")
+					{
+						log.info("Demarrage de la detection d'obstcle");
+						// capteur.detectionObstacle();
+						if(parametres[1].empty())
+						{
+							retourClient= capteur.detectionObstacle(  ) + "\n";
+						}
+						else
+						{
+							retourClient= capteur.detectionObstacle(  stoi(parametres[1]) ) + "\n";
+						}
+						
+					}
+					else if (parametres[0] == "stop")
+					{
+						log.info("arret de la detection d'obstcle");
+						// capteur.detectionObstacle();
+						retourClient= capteur.stopDetection() + "\n";
+						
+					}
+					else
+					{
+						log.erreur("main : La commande du client est differente de GET");
+						retourClient="-1\n";
+					}
+			
+					
+		
+				}
+				else
+				{
+					log.erreur("main : La commande du client est mauvaise : regex non validee");
+					retourClient="-1\n";
+					
+				}
+				
+				// This send() function sends the 13 bytes of the string to the new socket
+				log.info("retourClient =" + retourClient);
+				if (send(newsockfd, retourClient.c_str(), retourClient.size(), 0) == -1)
+				{
+					log.erreur("main : Erreur d'envoi du message retour");
+				}
+				else
+					log.info("main : succes d'envoi du message de retour");
+					
+				//write(newsockfd, retourClient.c_str(), retourClient.size());
+				retourClient.clear();
+					
+				
+				
+			}
+			else
+			{
+				log.info("main : Erreur message vide ou connexion interrompue");
+				run = false;
+			}
+			
+			
+			j++;
+			log.info("fin boucle");
+		}
+
+	}
+
+
+	// arret du serveur de socket
+    close(newsockfd);
+    close(sockfd);
+
+    log.info("main : fin du programme");
+
+    return 0;
+}
