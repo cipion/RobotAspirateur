@@ -13,6 +13,7 @@ public class ThreadRetourBase extends Thread {
     public void run() {
         logger.info( "run : ###################################################" );
         logger.info( "run : Debut du retour à la base" );
+        DriverManager.getInstanceDriverManager().runAllDriver();
 
         socket = Main.getSocket();
         gestionM = Main.getGestionM();
@@ -34,6 +35,8 @@ public class ThreadRetourBase extends Thread {
                 + PositionRobot.getInstancePosition().getAngle() );
 
         gestionM.StopGestionMouvement();
+
+        DriverManager.getInstanceDriverManager().stopAllDriver();
         logger.info( "run : ###################################################" );
 
     }
