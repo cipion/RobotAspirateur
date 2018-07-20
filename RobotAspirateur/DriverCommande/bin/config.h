@@ -27,7 +27,7 @@ class Config
 		typedef std::map<const std::string,std::string> CfgMap;
 		CfgMap config;
 		std::string s;
-		std::string file="../config/DriverMoteur.properties";
+		std::string file="../config/DriverComande.properties";
 		std::ifstream monflux;
 		Log log;
 

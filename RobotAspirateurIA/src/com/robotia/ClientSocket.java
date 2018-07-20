@@ -17,22 +17,30 @@ import org.slf4j.LoggerFactory;
 
 public class ClientSocket {
 
+    // variable contenant les ports des serveurs des drivers
     private int                 portSocketMoteur;
     private int                 portSocketCapteur;
+
+    // variables pour la socket
     private InetAddress         hostSocket;
     private Socket              socketMoteur;
     private Socket              socketCapteur;
+    // variables comptenant les messages à envoyer aux drivers
     private BufferedWriter      messageSendMoteur;
     private BufferedWriter      messageSendCapteur;
+    // flux de sortie pour envoyer les messages aux drivers
     OutputStream                osMoteur;
     OutputStreamWriter          oswMoteur;
+    // flux d'entrée pour recuperer les messages de retour des drivers
     InputStream                 isMoteur;
     InputStreamReader           isrMoteur;
     OutputStream                osCapteur;
     OutputStreamWriter          oswCapteur;
     InputStream                 isCapteur;
     InputStreamReader           isrCapteur;
+    // variable pour recuperer les properties
     private ResourceBundle      bundle;
+
     private BufferedReader      messageReceiveMoteur;
     private BufferedReader      messageReceiveCapteur;
     private String              message;
@@ -41,8 +49,13 @@ public class ClientSocket {
     private String              msgRotate;
     private String              msgGET;
 
+    // Variable pour les logs
     private static final Logger logger = LoggerFactory.getLogger( ClientSocket.class );
 
+    /**
+     * Constructeur qui charge les properties et initialise les ports des
+     * drivers
+     */
     ClientSocket()
     {
         logger.info( "Initialisation des varialbes des sockets" );
@@ -61,6 +74,7 @@ public class ClientSocket {
      */
     public Boolean initSocket()
     {
+        // recupere l'adresse IP des drivers via une properties
         try {
             logger.info( "Recuperation de l'IP" );
             hostSocket = InetAddress.getByName( bundle.getString( "socket.host" ) );
@@ -72,6 +86,7 @@ public class ClientSocket {
 
         logger.info( "Initialisation des sockets" );
 
+        // ouverture des socket input et output pour le driver des moteurs
         try {
             logger.debug( "hostSocket = " + hostSocket + " portSocketMoteur = " + portSocketMoteur );
             socketMoteur = new Socket( hostSocket, portSocketMoteur );
@@ -99,6 +114,7 @@ public class ClientSocket {
             return false;
         }
 
+        // ouverture des sockets input et output du driver des capteurs
         try {
             logger.debug( "hostSocket = " + hostSocket + " portSocketCapteur = " + portSocketMoteur );
             socketCapteur = new Socket( hostSocket, portSocketCapteur );
@@ -142,6 +158,7 @@ public class ClientSocket {
     {
         logger.info( "Arret des sockets en cours ..." );
         try {
+            // arret des flux input et output du driver moteur
             socketMoteur.close();
             messageReceiveMoteur.close();
             oswMoteur.close();
@@ -150,6 +167,7 @@ public class ClientSocket {
             isrMoteur.close();
             isMoteur.close();
 
+            // arret des flux input et output du driver des capteurs
             socketCapteur.close();
             messageReceiveCapteur.close();
             oswCapteur.close();
@@ -185,6 +203,8 @@ public class ClientSocket {
         logger.info( "Commande " + cmd.toString() + " des moteurs demandée avec les parametres Vitesse=" + vitesse
                 + " direction=" + direction );
 
+        // si la commande est "START", et que la vitesse et la direction sont
+        // conformes ...
         if ( cmd.equals( Commandes.START )
                 && vitesse <= 100 && vitesse >= -100
                 && direction <= 100 && direction >= -100 )
@@ -219,9 +239,10 @@ public class ClientSocket {
             }
 
         }
-        else if ( cmd.equals( Commandes.STOP )  
+        // si la commande est un "STOP"
+        else if ( cmd.equals( Commandes.STOP )
                 && vitesse <= 100 && vitesse >= -100
-                && direction <= 100 && direction >= -100)
+                && direction <= 100 && direction >= -100 )
         {
             logger.debug( "Envoi de la commande STOP" );
             try {
@@ -254,7 +275,7 @@ public class ClientSocket {
         }
         else
         {
-            logger.error( "Erreur, la commande doit etre START, ROTATE ou STOP avec vitesse et direction <= 100  et >= -100 (180 pour ROTATE)" );
+            logger.error( "Erreur, la commande doit etre START ou STOP avec vitesse et direction <= 100  et >= -100 (180 pour ROTATE)" );
             return "-1";
         }
 
@@ -263,11 +284,13 @@ public class ClientSocket {
     }
 
     /******
-     * Fonction qui envoie une commande des moteurs au serveurs de socket
+     * Fonction qui envoie une commande des moteurs au serveurs de socket en
+     * fonction d'un certain nombre de pas.
      * 
      * @param cmd
      * @param vitesse
      * @param direction
+     * @param nbPas
      * @return
      */
     public Boolean setDriverMoteurStatut( Commandes cmd, int vitesse, int direction, int nbPas )
@@ -275,6 +298,8 @@ public class ClientSocket {
         logger.info( "Commande " + cmd.toString() + " des moteurs demandée avec les parametres Vitesse=" + vitesse
                 + " direction=" + direction + ", nbPas=" + nbPas );
 
+        // commande pour avancer en fonction du nombre de pas "nbPas" en
+        // respectant les condition de vitesse et direction
         if ( cmd.equals( Commandes.START )
                 && vitesse <= 100 && vitesse >= -100
                 && direction <= 100 && direction >= -100
@@ -307,6 +332,7 @@ public class ClientSocket {
             }
 
         }
+        // fonction pour faire une rotation de "nbPas" pas
         else if ( cmd.equals( Commandes.ROTATE )
                 && vitesse <= 100 && vitesse >= -100
                 && direction <= 180 && direction >= -180
@@ -361,12 +387,20 @@ public class ClientSocket {
         }
         else
         {
-            logger.error( "Erreur, la commande doit etre START, ROTATE ou STOP avec vitesse et direction <= 100  et >= -100 (180 pour ROTATE) et nbPas > 0" );
+            logger.error( "Erreur, la commande doit etre START ou ROTATE avec vitesse et direction <= 100  et >= -100 (180 pour ROTATE) et nbPas > 0" );
             return false;
         }
 
     }
 
+    /******
+     * Fonction demande au driver capteur de nous envoer un message quand un
+     * capteur detecte un obstacle.
+     * 
+     * 
+     * @return une chaine de caractere contenant le nom du capteur et la
+     *         distance de detection.
+     */
     public String getDetectionObstacle()
     {
         logger.debug( "Envoi de la commande GET au driver des capteurs" );
@@ -403,6 +437,16 @@ public class ClientSocket {
 
     }
 
+    /******
+     * Fonction qui envoie une commande au driver capteur et qui attend un
+     * message de retour si un capteur detecte un obstacle durant la periode
+     * envoyée en parametre. Si la periode "timeout" est dépassée alors le
+     * driver envoie un message de timeout.
+     * 
+     * @param timeout
+     * @return une chaine de caractere contenant le nom du capteur et la
+     *         distance de detection.
+     */
     public String getDetectionObstacle( int timeout )
     {
         logger.debug( "Envoi de la commande GET au driver des capteurs" );
@@ -439,6 +483,13 @@ public class ClientSocket {
 
     }
 
+    /******
+     * Fonction qui envoie une commande au driver des capteurs pour stopper la
+     * detection d'obstacle
+     * 
+     * 
+     * @return le message de retour confirmant ou pas l'arret de la detection
+     */
     public String stopDetection()
     {
         logger.debug( "Envoi de la commande STOP au driver des capteurs" );

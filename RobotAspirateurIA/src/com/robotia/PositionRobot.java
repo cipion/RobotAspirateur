@@ -10,7 +10,10 @@ public class PositionRobot {
 
     }
 
+    // varialbe pour les logs
     private static final Logger  logger    = LoggerFactory.getLogger( PositionRobot.class );
+
+    // Instance a partager aux autres class = singleton
     private static PositionRobot INSTANCE  = new PositionRobot();
     private int                  PositionX = 0;
     private int                  PositionY = 0;
@@ -33,6 +36,13 @@ public class PositionRobot {
         return PositionY;
     }
 
+    /****
+     * Fonction qui permet de mettre à jour la position du robot sur l'axe X et
+     * Y. Le nombres de pas est recu en parametre et l'axe impacté est
+     * selectionné en fonction de l'angle.
+     * 
+     * @param nbPas
+     */
     public void ajouterNbPAs( int nbPas )
     {
         if ( nbPas > 0 )
@@ -68,6 +78,12 @@ public class PositionRobot {
         }
     }
 
+    /****
+     * Fonction qui permet de metre à jour l'angle en fonctio nde l'angle actuel
+     * et de celui envoyé en parametre.
+     * 
+     * @param angle
+     */
     public void setAngle( int angle ) {
 
         if ( angle == 90 || angle == -90 || angle == 180 || angle == -180 )

@@ -34,6 +34,11 @@ public class GestionMouvement {
     // les
     // pas
 
+    /****
+     * Constructeur qui recupere le socket initialisé par la class ClientSocket,
+     * qui recupere les properties (le timeout de detection) et recupere la
+     * position du robot.
+     */
     public GestionMouvement() {
         logger.info( "GestionMouvement : Initialisation du gestionnaire des mouvements" );
         socket = Main.getSocket();
@@ -46,6 +51,12 @@ public class GestionMouvement {
         timeoutRotation = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutRotation" ) );
     }
 
+    /****
+     * fonction qui demande a l'objet client socket d'arreter la connexion avec
+     * les drivers.
+     * 
+     * @return True si l'arret est fait, sinon false
+     */
     public Boolean StopGestionMouvement()
     {
         if ( socket.stopSocket() )
@@ -64,7 +75,7 @@ public class GestionMouvement {
      * Fonction de rotation sur place de 90°, -90° ou 180°
      * 
      * @param degres
-     * @return
+     * @return true si la rotation est faite sinon false
      */
     private Boolean rotationRobot( int degres )
     {
@@ -98,6 +109,14 @@ public class GestionMouvement {
 
     }
 
+    /****
+     * fonction qui permet de faire une rotation de "nbPas" dans la direction
+     * "direction"
+     * 
+     * @param direction
+     * @param nbPas
+     * @return
+     */
     private Boolean rotationRobotnbPas( int direction, int nbPas )
     {
         rotationEnCours = true;
@@ -127,6 +146,12 @@ public class GestionMouvement {
             return false;
     }
 
+    /****
+     * Fonction qui permet de faire un deplacement en avant de "nbPas" pas
+     * 
+     * @param nbPas
+     * @return true si le deplacement est fait
+     */
     private Boolean marcheAvantRobot( int nbPas )
     {
         rotationEnCours = false;
@@ -158,6 +183,11 @@ public class GestionMouvement {
 
     }
 
+    /****
+     * Fonction qui arrete le deplacement du robot
+     * 
+     * @return true si l'arret est fait
+     */
     private Boolean arretRobot()
     {
 
@@ -198,6 +228,13 @@ public class GestionMouvement {
 
     }
 
+    /****
+     * Fonction qui genere un thread pour attendre la detection d'obstacle par
+     * un capteur.
+     * 
+     * @return 1 si la fonction de detection est arretée, 0 si une detection est
+     *         faite et -1 s'il y a un probleme
+     */
     private int detectionObstacle()
     {
         FutureTask<String> timeoutTask = null;
@@ -207,7 +244,7 @@ public class GestionMouvement {
 
             @Override
             public String call() throws Exception {
-                logger.debug( "detectionObstacle : lancement des detections des capteurs sans timeout: " );
+                logger.debug( "detectionObstacle : lancement des detections des capteurs sans timeout " );
                 String msg = socket.getDetectionObstacle();
 
                 return msg;

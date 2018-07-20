@@ -15,28 +15,13 @@
 #include <signal.h>
 
 
-#define PORT 1200
-
 
 /******
 *
-*	Programme de pilotage des 2 moteurs pas à pas pour faire avancer le robot aspirateur
-*	les fichiers sources et le programme compilé sont dans le dossier binary_function
-*	
-*	Le driver recoit des commande via des sockets, on peut demander de faire tourner les moteur en fonction :
-*	- une vitesse entre -100 et 0 pour la marche arriere ou entre 0 et 100 pour la marche avant (c'est un pourcentage)
-*	- une direction, entre -100 et 1 pour tourner à gauche OU entre 1 et 100 pour tourner à droite (0 = tout droit)
-*	- un nombre de pas, si > à 0 le moteur fera le nombre de pas indiqué sinon si = à 0 le moteurs tournent à l'infinie
 *
-*	la configuration du host et du port de connexion au serveur de socket se trouve dans le fichier de configuration DriverMoteur.properties du dossier "config"
-*	le message à envoyer au serveur est sous la forme : COMMANDE;VITESSE;DIRECTION;NBPAS
-*	- COMMANDE = start, stop ou rotation
-*	- VITESSE = -100 à 100
-*	- DIRECTION = -100 à 100
-*	- NBPAS = 0 à valeur max int
 *
 *	Commande pour conpiler le programme :
-*	g++ -std=c++11 -lwiringPi -lpthread  main.cpp log.cpp config.cpp controlmoteur.cpp -o RobotAspirateur
+*	g++ -std=c++11 -lwiringPi -lpthread  main.cpp log.cpp config.cpp comandeManager.cpp -o ComandeManager
 *	Kill process utilisant le port 1200 : kill `netstat | grep 1200 | awk '/[0-9]/ {print $1}'`
 ********/
 
@@ -97,6 +82,7 @@ int main(int argc, char *argv[])
 	char buffer[256];
 	
 	portno = stoi(config.find("serveurport")->second);
+	string host = config.find("serveurhost")->second
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	
@@ -132,7 +118,7 @@ int main(int argc, char *argv[])
 	
 	if (sockfd < 0)
         error("ERROR opening socket");
-    server = gethostbyname(argv[1]);
+    server = gethostbyname(host);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
@@ -143,9 +129,15 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR connecting");
+	
+	/* DEBUT DU TRAITEMENT DES COMMANDES */
+	
+	int retour = comande.driver();
+	
     printf("Please enter the message: ");
     bzero(buffer,256);
     fgets(buffer,255,stdin);
+	
     n = write(sockfd, buffer, strlen(buffer));
     if (n < 0)
          error("ERROR writing to socket");
@@ -153,7 +145,9 @@ int main(int argc, char *argv[])
     n = read(sockfd, buffer, 255);
     if (n < 0)
          error("ERROR reading from socket");
+		 
     printf("%s\n", buffer);
+	
     close(sockfd);
 
 
