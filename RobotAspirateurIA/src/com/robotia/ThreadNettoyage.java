@@ -3,6 +3,12 @@ package com.robotia;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/****
+ * methode qui genere un thread gérant la fnction de nettoyage du robot.
+ * 
+ * @author Administrateur
+ * 
+ */
 public class ThreadNettoyage extends Thread {
 
     private static final Logger logger = LoggerFactory.getLogger( ThreadNettoyage.class );
@@ -14,9 +20,12 @@ public class ThreadNettoyage extends Thread {
         logger.info( "run : ###################################################" );
         logger.info( "run : Debut du nettoyage" );
 
-        DriverManager.getInstanceDriverManager().runAllDriver();
+        // on demarre les drivers du robot
+        // DriverManager.getInstanceDriverManager().runAllDriver();
 
+        // on recupere le socket de communication avec les drivers
         socket = Main.getSocket();
+        // objet de gestion des mouvenement pour permettre le nettoyage
         gestionM = Main.getGestionM();
 
         if ( !socket.initSocket() )
@@ -25,8 +34,10 @@ public class ThreadNettoyage extends Thread {
             socket.stopSocket();
         }
 
+        // lancement du nettoyage
         gestionM.nettoyage();
 
+        // on envoie un signal d'arret aux drivers
         logger.info( "run : Arret du programme de nettoyage" );
         gestionM.StopGestionMouvement();
 
@@ -34,7 +45,8 @@ public class ThreadNettoyage extends Thread {
                 + PositionRobot.getInstancePosition().getPositionY() + ", Angle="
                 + PositionRobot.getInstancePosition().getAngle() );
 
-        DriverManager.getInstanceDriverManager().stopAllDriver();
+        // procedure d'arret de la communication avec les drivers
+        // DriverManager.getInstanceDriverManager().stopAllDriver();
         logger.info( "run : ###################################################" );
 
     }

@@ -8,12 +8,26 @@ import java.util.ResourceBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/****
+ * Class qui permet de demarrer les drivers C++ pour piloter les moteur et les
+ * capteurs
+ * 
+ * @author Administrateur
+ * 
+ */
 public class DriverManager {
 
     private String               runCommande;
+
+    // cet objet permet de generer un singleton, un simple instance disponible
+    // depuis tous les objet du programme.
     private static DriverManager INSTANCE = new DriverManager();
+    // objet pour stocker toutes les properties
     private ResourceBundle       bundle;
+
+    // objet pour les log
     private static final Logger  logger   = LoggerFactory.getLogger( DriverManager.class );
+
     private String               dossierDriverMoteur;
     private String               dossierDriverCapteur;
     private String               executableDriverMoteur;
@@ -21,6 +35,10 @@ public class DriverManager {
     private String               fihierLogDriverCapteur;
     private String               fihierLogDriverMoteur;
 
+    /****
+     * constructeur qui charge les properties, qui recupere les nom des
+     * dossiers, des executables ...
+     */
     public DriverManager() {
         logger.info( "DriverManager : Initialisation des properties des drivers" );
 
@@ -33,11 +51,21 @@ public class DriverManager {
         fihierLogDriverCapteur = bundle.getString( "driver.fihierLogDriverCapteur" );
     }
 
+    /****
+     * methode permettant de recuperer l'instance du singleton
+     * 
+     * @return
+     */
     public static DriverManager getInstanceDriverManager()
     {
         return INSTANCE;
     }
 
+    /****
+     * methode pour démarrer les deux driver (moteur et capteur)
+     * 
+     * @return vrai s'il n'y a pas de probleme d'exection des commandes
+     */
     public Boolean runAllDriver()
     {
         String retour;
@@ -52,6 +80,13 @@ public class DriverManager {
         return true;
     }
 
+    /****
+     * methode qui arrete le driver moteur puis les redémarres.
+     * 
+     * TODO : finir le developpement
+     * 
+     * @return
+     */
     public Boolean restartDriverMoteur()
     {
         String retour;
@@ -63,6 +98,11 @@ public class DriverManager {
         return true;
     }
 
+    /****
+     * methode qui arrete le driver des capteurs puis le redémarre
+     * 
+     * @return
+     */
     public Boolean restartDriverCapteur()
     {
         String retour;
@@ -73,6 +113,14 @@ public class DriverManager {
         return true;
     }
 
+    /****
+     * methode qui execute la commandes envoyées en parametre sur l'OS linux
+     * TODO : finir le dev
+     * 
+     * @param command
+     * @param dossier
+     * @return
+     */
     private String executeCommand( String command, String dossier ) {
 
         logger.info( "executeCommand : passage de la commande linux : " + command );
@@ -100,6 +148,11 @@ public class DriverManager {
 
     }
 
+    /****
+     * methode pour arreter tous les drivers (moteur et capteur)
+     * 
+     * @return
+     */
     public Boolean stopAllDriver()
     {
 
@@ -107,12 +160,22 @@ public class DriverManager {
 
     }
 
+    /****
+     * methode pour arreter le driver moteur
+     * 
+     * @return
+     */
     public Boolean stopDriverMoteur()
     {
         return null;
 
     }
 
+    /****
+     * methode pour arreter le driver capteur
+     * 
+     * @return
+     */
     public Boolean stopDriverCapteur()
     {
         return null;

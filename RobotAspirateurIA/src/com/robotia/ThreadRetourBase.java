@@ -13,9 +13,12 @@ public class ThreadRetourBase extends Thread {
     public void run() {
         logger.info( "run : ###################################################" );
         logger.info( "run : Debut du retour à la base" );
-        DriverManager.getInstanceDriverManager().runAllDriver();
+        // DriverManager.getInstanceDriverManager().runAllDriver();
 
+        // objet pour communiquer avec les drivers moteur et capteur
         socket = Main.getSocket();
+
+        // objet pour gerer les mouvements du robot
         gestionM = Main.getGestionM();
 
         if ( !socket.initSocket() )
@@ -24,19 +27,23 @@ public class ThreadRetourBase extends Thread {
             socket.stopSocket();
         }
 
+        // lancement du retour a la base du robot
         gestionM.retourAlaBase();
 
         logger.info( "run : Arret du programme du retour à la base" );
 
+        // on souhaite arreter les action en cours
         gestionM.StopGestionMouvement();
 
         logger.info( "run : Position du robot : X=" + PositionRobot.getInstancePosition().getPositionX() + ", Y="
                 + PositionRobot.getInstancePosition().getPositionY() + ", Angle="
                 + PositionRobot.getInstancePosition().getAngle() );
 
+        // on envoie un signal aux driver pour arreter les deplacement en cours
         gestionM.StopGestionMouvement();
 
-        DriverManager.getInstanceDriverManager().stopAllDriver();
+        // on arrete les drivers
+        // DriverManager.getInstanceDriverManager().stopAllDriver();
         logger.info( "run : ###################################################" );
 
     }
