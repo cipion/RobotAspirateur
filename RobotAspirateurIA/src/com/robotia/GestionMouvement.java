@@ -26,7 +26,9 @@ public class GestionMouvement {
     // si les mouvement etait une rotation, alors on ne soustrait pas les pas à
     // la position.
     private Boolean             rotationEnCours     = false;
-    private Boolean             ajoutDesPas         = true;                                             // on
+    private Boolean             ajoutDesPas         = true;
+
+    private int                 nbPasDecalage       = 0;                                                // on
 
     // ajoute
     // ou
@@ -49,6 +51,7 @@ public class GestionMouvement {
 
         position = PositionRobot.getInstancePosition();
         timeoutRotation = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutRotation" ) );
+        nbPasDecalage = Integer.parseInt( bundle.getString( "socket.driverMoteur.nbPasDecalage" ) );
     }
 
     /****
@@ -549,7 +552,7 @@ public class GestionMouvement {
         int angle = 0;
 
         if ( PositionRobot.getInstancePosition().getPositionX() != 0
-                || PositionRobot.getInstancePosition().getPositionY() != 0 )
+                && PositionRobot.getInstancePosition().getPositionY() != 0 )
         {
             do
             {
@@ -577,38 +580,39 @@ public class GestionMouvement {
                     }
                     else if ( positionX < 0 )
                     {
-                        logger.debug( "retourAlaBase : positionX < 0, angle du robot = 0 donc demi tour (180°)" );
-
-                        logger.debug( "retourAlaBase : Robot dans le bon angle (180°)" );
+                        logger.debug( "retourAlaBase : Robot dans le bon angle (0°)" );
 
                         logger.debug( "retourAlaBase : Le robot avance tout droit" );
                         // Avancer tout droit
-                        marcheAvantRobot( positionX );
+                        marcheAvantRobot( Math.abs( positionX ) );
 
                         while ( continuerTraitement )
                         {
                             int retourDetection = detectionObstacle();
                             arretRobot(); // une fois la detection faite ou
-                                          // annulée
+                            // annulée
                             // on met à jour les coordonée via la
                             // fontion d'arret
 
                             positionX = PositionRobot.getInstancePosition().getPositionX();
                             positionY = PositionRobot.getInstancePosition().getPositionY();
                             angle = PositionRobot.getInstancePosition().getAngle();
+                            logger.debug( "" );
                             logger.debug( "retourAlaBase : positionX =" + positionX + ", postionY =" + positionY
                                     + ", angle ="
                                     + angle );
 
-                            logger.debug( "retourAlaBase : Boucle : traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
+                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
 
                             if ( retourDetection == 0 && positionX != 0 )
                             {
+
                                 logger.info( "retourAlaBase : obstacle detecté et positionX est different de 0, analyse de l'angle ..." );
 
                                 if ( angle == 0 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 0° alors rotation de -90°" );
+
+                                    logger.debug( "retourAlaBase : position > 0, detection obstacle à 0° alors rotation de -90°" );
                                     do
                                     {
 
@@ -616,54 +620,105 @@ public class GestionMouvement {
 
                                         retourDetection = detectionObstacle( timeoutRotation );
                                         if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            logger.debug( "retourAlaBase : angle=0, obstacle détécté, on recommence la rotation de -90" );
 
                                     } while ( retourDetection == 0 );
 
                                 }
                                 else if ( angle == 180 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 180° alors rotation de 90°" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 180° alors rotation de 90°" );
+                                        do
+                                        {
 
-                                        rotationRobot( 90 );
+                                            rotationRobot( 90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de 90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=180, obstacle détécté, on recommence la rotation de 90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX < 0, detection obstacle à 180° alors rotation de -90°" );
+                                        do
+                                        {
+
+                                            rotationRobot( -90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=180, obstacle détécté, on recommence la rotation de -90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else if ( angle == 90 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 90° alors rotation de -90°" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de 90°" );
+                                        do
+                                        {
 
-                                        rotationRobot( -90 );
+                                            rotationRobot( 90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=90, obstacle détécté, on recommence la rotation de 90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX < 0, detection obstacle à 90° alors rotation de -90°" );
+                                        do
+                                        {
+
+                                            rotationRobot( -90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=90, obstacle détécté, on recommence la rotation de -90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else if ( angle == -90 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 90° alors rotation de 90° à nouveau" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de -90° à nouveau" );
+                                        do
+                                        {
 
-                                        rotationRobot( -90 );
+                                            rotationRobot( -90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=-90, obstacle détécté, on recommence la rotation de -90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de 90° à nouveau" );
+                                        do
+                                        {
+
+                                            rotationRobot( 90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=-90, obstacle détécté, on recommence la rotation de 90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else
@@ -680,7 +735,14 @@ public class GestionMouvement {
 
                                 }
 
-                                marcheAvantRobot( positionX );
+                                if ( angle == 90 || angle == -90 )
+                                {
+                                    marcheAvantRobot( nbPasDecalage );
+                                }
+                                else
+                                {
+                                    marcheAvantRobot( Math.abs( positionX ) );
+                                }
 
                                 logger.debug( "retourAlaBase : marche avant" );
                             }
@@ -755,7 +817,14 @@ public class GestionMouvement {
 
                                     }
 
-                                    marcheAvantRobot( positionY );
+                                    if ( angle == 0 || angle == 180 )
+                                    {
+                                        marcheAvantRobot( nbPasDecalage );
+                                    }
+                                    else
+                                    {
+                                        marcheAvantRobot( Math.abs( positionY ) );
+                                    }
 
                                 }
                                 else if ( positionY < 0 )
@@ -826,7 +895,14 @@ public class GestionMouvement {
 
                                     }
 
-                                    marcheAvantRobot( Math.abs( positionY ) );
+                                    if ( angle == 0 || angle == 180 )
+                                    {
+                                        marcheAvantRobot( nbPasDecalage );
+                                    }
+                                    else
+                                    {
+                                        marcheAvantRobot( Math.abs( positionY ) );
+                                    }
                                 }
                                 else
                                 {
@@ -935,37 +1011,41 @@ public class GestionMouvement {
                 {
                     if ( positionX > 0 )
                     {
+                        logger.debug( "retourAlaBase : positionX < 0, angle du robot = 0 donc demi tour (180°)" );
 
                         logger.debug( "retourAlaBase : Robot dans le bon angle (180°)" );
 
                         logger.debug( "retourAlaBase : Le robot avance tout droit" );
                         // Avancer tout droit
-                        marcheAvantRobot( positionX );
+                        marcheAvantRobot( Math.abs( positionX ) );
 
                         while ( continuerTraitement )
                         {
                             int retourDetection = detectionObstacle();
                             arretRobot(); // une fois la detection faite ou
-                                          // annulée
+                            // annulée
                             // on met à jour les coordonée via la
                             // fontion d'arret
 
                             positionX = PositionRobot.getInstancePosition().getPositionX();
                             positionY = PositionRobot.getInstancePosition().getPositionY();
                             angle = PositionRobot.getInstancePosition().getAngle();
+                            logger.debug( "" );
                             logger.debug( "retourAlaBase : positionX =" + positionX + ", postionY =" + positionY
                                     + ", angle ="
                                     + angle );
 
-                            logger.debug( "retourAlaBase : Boucle : traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
+                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
 
                             if ( retourDetection == 0 && positionX != 0 )
                             {
+
                                 logger.info( "retourAlaBase : obstacle detecté et positionX est different de 0, analyse de l'angle ..." );
 
                                 if ( angle == 0 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 0° alors rotation de -90°" );
+
+                                    logger.debug( "retourAlaBase : position > 0, detection obstacle à 0° alors rotation de -90°" );
                                     do
                                     {
 
@@ -973,54 +1053,105 @@ public class GestionMouvement {
 
                                         retourDetection = detectionObstacle( timeoutRotation );
                                         if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            logger.debug( "retourAlaBase : angle=0, obstacle détécté, on recommence la rotation de -90" );
 
                                     } while ( retourDetection == 0 );
 
                                 }
                                 else if ( angle == 180 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 180° alors rotation de 90°" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 180° alors rotation de 90°" );
+                                        do
+                                        {
 
-                                        rotationRobot( 90 );
+                                            rotationRobot( 90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de 90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=180, obstacle détécté, on recommence la rotation de 90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX < 0, detection obstacle à 180° alors rotation de -90°" );
+                                        do
+                                        {
+
+                                            rotationRobot( -90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=180, obstacle détécté, on recommence la rotation de -90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else if ( angle == 90 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 90° alors rotation de -90°" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de 90°" );
+                                        do
+                                        {
 
-                                        rotationRobot( -90 );
+                                            rotationRobot( 90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=90, obstacle détécté, on recommence la rotation de 90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX < 0, detection obstacle à 90° alors rotation de -90°" );
+                                        do
+                                        {
+
+                                            rotationRobot( -90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=90, obstacle détécté, on recommence la rotation de -90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else if ( angle == -90 )
                                 {
-                                    logger.debug( "retourAlaBase : detection obstacle à 90° alors rotation de 90° à nouveau" );
-                                    do
+                                    if ( positionX > 0 )
                                     {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de -90° à nouveau" );
+                                        do
+                                        {
 
-                                        rotationRobot( -90 );
+                                            rotationRobot( -90 );
 
-                                        retourDetection = detectionObstacle( timeoutRotation );
-                                        if ( retourDetection == 0 )
-                                            logger.debug( "retourAlaBase : obstacle détécté, on recommence la rotation de -90" );
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=-90, obstacle détécté, on recommence la rotation de -90" );
 
-                                    } while ( retourDetection == 0 );
+                                        } while ( retourDetection == 0 );
+                                    }
+                                    else
+                                    {
+                                        logger.debug( "retourAlaBase : positionX > 0, detection obstacle à 90° alors rotation de 90° à nouveau" );
+                                        do
+                                        {
+
+                                            rotationRobot( 90 );
+
+                                            retourDetection = detectionObstacle( timeoutRotation );
+                                            if ( retourDetection == 0 )
+                                                logger.debug( "retourAlaBase : angle=-90, obstacle détécté, on recommence la rotation de 90" );
+
+                                        } while ( retourDetection == 0 );
+                                    }
 
                                 }
                                 else
@@ -1037,7 +1168,14 @@ public class GestionMouvement {
 
                                 }
 
-                                marcheAvantRobot( positionX );
+                                if ( angle == 90 || angle == -90 )
+                                {
+                                    marcheAvantRobot( nbPasDecalage );
+                                }
+                                else
+                                {
+                                    marcheAvantRobot( Math.abs( positionX ) );
+                                }
 
                                 logger.debug( "retourAlaBase : marche avant" );
                             }
@@ -1112,7 +1250,14 @@ public class GestionMouvement {
 
                                     }
 
-                                    marcheAvantRobot( positionY );
+                                    if ( angle == 0 || angle == 180 )
+                                    {
+                                        marcheAvantRobot( nbPasDecalage );
+                                    }
+                                    else
+                                    {
+                                        marcheAvantRobot( Math.abs( positionY ) );
+                                    }
 
                                 }
                                 else if ( positionY < 0 )
@@ -1183,7 +1328,14 @@ public class GestionMouvement {
 
                                     }
 
-                                    marcheAvantRobot( Math.abs( positionY ) );
+                                    if ( angle == 0 || angle == 180 )
+                                    {
+                                        marcheAvantRobot( nbPasDecalage );
+                                    }
+                                    else
+                                    {
+                                        marcheAvantRobot( Math.abs( positionY ) );
+                                    }
                                 }
                                 else
                                 {
