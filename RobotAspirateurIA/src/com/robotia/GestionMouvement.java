@@ -17,7 +17,8 @@ public class GestionMouvement {
     private int                 nbPas               = 0;
     private ResourceBundle      bundle;
     private PositionRobot       position;
-    private int                 timeoutRotation;
+    private int                 timeoutRotation     = 0;
+    private int                 timeoutDecalage     = 0;
     private int                 NBPas_obj;
     private static Boolean      continuerTraitement = true;
     private static Boolean      stopDetection       = false;
@@ -51,7 +52,8 @@ public class GestionMouvement {
 
         position = PositionRobot.getInstancePosition();
         timeoutRotation = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutRotation" ) );
-        nbPasDecalage = Integer.parseInt( bundle.getString( "socket.driverMoteur.nbPasDecalage" ) );
+        timeoutDecalage = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutDecalage" ) );
+        nbPasDecalage = Integer.parseInt( bundle.getString( "gestionMouvement.nbPasDecalage" ) );
     }
 
     /****
@@ -168,7 +170,7 @@ public class GestionMouvement {
 
             @Override
             public Boolean call() throws Exception {
-                logger.debug( "marcheAvantRobot : lancement du thread de marche avant avec " + NBPas_obj + "pas " );
+                logger.debug( "marcheAvantRobot : lancement du thread de marche avant avec " + NBPas_obj + " pas " );
                 Boolean msg = socket.setDriverMoteurStatut( Commandes.START, 100, 0, Math.abs( NBPas_obj ) );
 
                 if ( msg )
@@ -582,14 +584,21 @@ public class GestionMouvement {
                     {
                         logger.debug( "retourAlaBase : Robot dans le bon angle (0°)" );
 
-                        logger.debug( "retourAlaBase : Le robot avance tout droit" );
+                        logger.debug( "retourAlaBase : Le robot avance tout droit, marche avant de "
+                                + Math.abs( positionX ) + " pas" );
                         // Avancer tout droit
                         marcheAvantRobot( Math.abs( positionX ) );
 
+                        int retourDetection = detectionObstacle();
+                        logger.debug( "retourAlaBase : demande d'arret du robot" );
+                        if ( retourDetection != 0 )
+                        {
+                            arretRobot(); // une fois la detection faite ou
+                        }
+
                         while ( continuerTraitement )
                         {
-                            int retourDetection = detectionObstacle();
-                            arretRobot(); // une fois la detection faite ou
+
                             // annulée
                             // on met à jour les coordonée via la
                             // fontion d'arret
@@ -602,7 +611,7 @@ public class GestionMouvement {
                                     + ", angle ="
                                     + angle );
 
-                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
+                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE)" );
 
                             if ( retourDetection == 0 && positionX != 0 )
                             {
@@ -737,11 +746,34 @@ public class GestionMouvement {
 
                                 if ( angle == 90 || angle == -90 )
                                 {
+                                    logger.debug( "retourAlaBase : le robot n'est pas dans l'axe X alors on avance sur Y de seulement "
+                                            + nbPasDecalage + " pas" );
                                     marcheAvantRobot( nbPasDecalage );
+
+                                    retourDetection = detectionObstacle( timeoutDecalage );
+                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                            + " demande d'arret du robot" );
+                                    if ( retourDetection != 0 )
+                                    {
+                                        arretRobot(); // une fois la
+                                                      // detection
+                                                      // faite ou
+                                    }
                                 }
                                 else
                                 {
+                                    logger.debug( "retourAlaBase : le robot est dans l'axe X, alors on avance de "
+                                            + Math.abs( positionX ) + " pas" );
                                     marcheAvantRobot( Math.abs( positionX ) );
+
+                                    retourDetection = detectionObstacle();
+                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                            + " demande d'arret du robot" );
+                                    if ( retourDetection != 0 )
+                                    {
+                                        arretRobot(); // une fois la detection
+                                                      // faite ou
+                                    }
                                 }
 
                                 logger.debug( "retourAlaBase : marche avant" );
@@ -819,11 +851,35 @@ public class GestionMouvement {
 
                                     if ( angle == 0 || angle == 180 )
                                     {
+                                        logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
+                                                + nbPasDecalage + " pas" );
                                         marcheAvantRobot( nbPasDecalage );
+
+                                        retourDetection = detectionObstacle( timeoutDecalage );
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                     else
                                     {
+                                        logger.debug( "retourAlaBase : on est sur l'axe Y alors on avance de "
+                                                + Math.abs( positionY ) + " pas" );
                                         marcheAvantRobot( Math.abs( positionY ) );
+
+                                        retourDetection = detectionObstacle();
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
 
                                 }
@@ -897,11 +953,35 @@ public class GestionMouvement {
 
                                     if ( angle == 0 || angle == 180 )
                                     {
+                                        logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
+                                                + nbPasDecalage + " pas" );
                                         marcheAvantRobot( nbPasDecalage );
+
+                                        retourDetection = detectionObstacle( timeoutDecalage );
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                     else
                                     {
+                                        logger.debug( "retourAlaBase : on est sur l'axe Y alors on avance de "
+                                                + Math.abs( positionY ) + " pas" );
                                         marcheAvantRobot( Math.abs( positionY ) );
+
+                                        retourDetection = detectionObstacle();
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                 }
                                 else
@@ -1011,18 +1091,26 @@ public class GestionMouvement {
                 {
                     if ( positionX > 0 )
                     {
-                        logger.debug( "retourAlaBase : positionX < 0, angle du robot = 0 donc demi tour (180°)" );
 
                         logger.debug( "retourAlaBase : Robot dans le bon angle (180°)" );
 
-                        logger.debug( "retourAlaBase : Le robot avance tout droit" );
+                        logger.debug( "retourAlaBase : Le robot avance tout droit, on avance de "
+                                + Math.abs( positionX ) + " pas" );
                         // Avancer tout droit
                         marcheAvantRobot( Math.abs( positionX ) );
 
+                        int retourDetection = detectionObstacle();
+                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                + " demande d'arret du robot" );
+                        if ( retourDetection != 0 )
+                        {
+                            arretRobot(); // une fois la detection
+                                          // faite ou
+                        }
+
                         while ( continuerTraitement )
                         {
-                            int retourDetection = detectionObstacle();
-                            arretRobot(); // une fois la detection faite ou
+
                             // annulée
                             // on met à jour les coordonée via la
                             // fontion d'arret
@@ -1035,12 +1123,13 @@ public class GestionMouvement {
                                     + ", angle ="
                                     + angle );
 
-                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE), en attente de detection d'un obstacle ou de fin de marche avant" );
+                            logger.debug( "retourAlaBase : Debut de la boucle, traitement en cours (continuerTraitement = TRUE) et retourDetection="
+                                    + retourDetection );
 
-                            if ( retourDetection == 0 && positionX != 0 )
+                            if ( positionX != 0 )
                             {
 
-                                logger.info( "retourAlaBase : obstacle detecté et positionX est different de 0, analyse de l'angle ..." );
+                                logger.info( "retourAlaBase : positionX est different de 0, analyse de l'angle ..." );
 
                                 if ( angle == 0 )
                                 {
@@ -1170,18 +1259,41 @@ public class GestionMouvement {
 
                                 if ( angle == 90 || angle == -90 )
                                 {
+                                    logger.debug( "retourAlaBase : le robot n'est pas dans l'axe X alors on avance sur Y de seulement "
+                                            + nbPasDecalage + " pas" );
                                     marcheAvantRobot( nbPasDecalage );
+
+                                    retourDetection = detectionObstacle( timeoutDecalage );
+                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                            + " demande d'arret du robot" );
+                                    if ( retourDetection != 0 )
+                                    {
+                                        arretRobot(); // une fois la
+                                                      // detection
+                                                      // faite ou
+                                    }
                                 }
                                 else
                                 {
+                                    logger.debug( "retourAlaBase : le robot est dans l'axe X, alors on avance de "
+                                            + Math.abs( positionX ) + " pas" );
                                     marcheAvantRobot( Math.abs( positionX ) );
+
+                                    retourDetection = detectionObstacle();
+                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                            + " demande d'arret du robot" );
+                                    if ( retourDetection != 0 )
+                                    {
+                                        arretRobot(); // une fois la detection
+                                                      // faite ou
+                                    }
                                 }
 
                                 logger.debug( "retourAlaBase : marche avant" );
                             }
                             else if ( positionX == 0 && positionY != 0 )
                             {
-                                logger.info( "retourAlaBase : obstacle detecté, positionX = 0 et positionY differente de 0, on analyse l'angle" );
+                                logger.info( "retourAlaBase : positionX = 0 et positionY differente de 0, on analyse l'angle" );
                                 if ( positionY > 0 )
                                 {
                                     if ( angle == 0 )
@@ -1252,11 +1364,35 @@ public class GestionMouvement {
 
                                     if ( angle == 0 || angle == 180 )
                                     {
+                                        logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
+                                                + nbPasDecalage + " pas" );
                                         marcheAvantRobot( nbPasDecalage );
+
+                                        retourDetection = detectionObstacle( timeoutDecalage );
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                     else
                                     {
+                                        logger.debug( "retourAlaBase : on est sur l'axe Y alors on avance de "
+                                                + Math.abs( positionY ) + " pas" );
                                         marcheAvantRobot( Math.abs( positionY ) );
+
+                                        retourDetection = detectionObstacle();
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
 
                                 }
@@ -1279,7 +1415,7 @@ public class GestionMouvement {
                                     }
                                     else if ( angle == 180 )
                                     {
-                                        logger.debug( "retourAlaBase : detection obstacle à 180° alors rotation de -90°" );
+                                        logger.debug( "retourAlaBase : angle = 180° alors rotation de -90°" );
                                         do
                                         {
 
@@ -1330,11 +1466,35 @@ public class GestionMouvement {
 
                                     if ( angle == 0 || angle == 180 )
                                     {
+                                        logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
+                                                + nbPasDecalage + " pas" );
                                         marcheAvantRobot( nbPasDecalage );
+
+                                        retourDetection = detectionObstacle( timeoutDecalage );
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                     else
                                     {
+                                        logger.debug( "retourAlaBase : on est sur l'axe Y alors on avance de "
+                                                + Math.abs( positionY ) + " pas" );
                                         marcheAvantRobot( Math.abs( positionY ) );
+
+                                        retourDetection = detectionObstacle();
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
+                                        if ( retourDetection != 0 )
+                                        {
+                                            arretRobot(); // une fois la
+                                                          // detection
+                                                          // faite ou
+                                        }
                                     }
                                 }
                                 else
