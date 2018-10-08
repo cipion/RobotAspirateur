@@ -590,9 +590,10 @@ public class GestionMouvement {
                         marcheAvantRobot( Math.abs( positionX ) );
 
                         int retourDetection = detectionObstacle();
-                        logger.debug( "retourAlaBase : demande d'arret du robot" );
-                        if ( retourDetection != 0 )
+
+                        if ( retourDetection == 0 ) // obstacle détécté
                         {
+                            logger.debug( "retourAlaBase : demande d'arret du robot" );
                             arretRobot(); // une fois la detection faite ou
                         }
 
