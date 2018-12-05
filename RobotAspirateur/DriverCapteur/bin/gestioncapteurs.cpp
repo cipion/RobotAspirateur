@@ -71,24 +71,31 @@ string GestionCapteurs::detectionObstacle( int timeout)
 	{
 		orientationCpt = "GAUCHE";
 		log.info("detectionObstacle : Detecteur gauche");
+		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
 	}
 	else if (detectionCpt2 == true)
 	{
 		orientationCpt = "CENTRE";
 		log.info("detectionObstacle : Detecteur centre");
+		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
 	}
 	else if (detectionCpt3 == true)
 	{
 		orientationCpt = "DROITE";
 		log.info("detectionObstacle : Detecteur droite");
+		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
 	}
-	else
+	else if (timeout == 0)
+	{
+		orientationCpt = "ARRET";
+		log.info("detectionObstacle : Arret");
+	}else
 	{
 		orientationCpt = "TIMEOUT";
 		log.info("detectionObstacle : Timeout");
 	}
 	
-	log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
+	
 	
 	return orientationCpt + ";" + to_string(distance);
 }
