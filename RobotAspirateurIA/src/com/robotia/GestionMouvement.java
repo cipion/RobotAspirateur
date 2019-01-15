@@ -278,7 +278,7 @@ public class GestionMouvement {
         }
         else if ( timeoutTask.isDone() )
         {
-            logger.info( "detectionObstacle : Arret normal du thread de detection, thread arreté" );
+            logger.info( "detectionObstacle : Arret normal du thread de detection (obstacle détecté), thread arreté" );
             return 0;
         }
         else
@@ -378,10 +378,16 @@ public class GestionMouvement {
 
                 @Override
                 public String call() throws Exception {
-                    logger.debug( "detectionObstacle : lancement des detections des capteurs avec timeout: " );
+                    logger.debug( "detectionObstacle : lancement des detections des capteurs avec timeout ="
+                            + timeoutRotation );
                     String msg = socket.getDetectionObstacle( timeoutRotation );
 
-                    return msg;
+                    if ( msg.contains( "TIMEOUT" ) )
+                    {
+                        return "-1";
+                    }
+                    else
+                        return msg;
                 }
             } );
 
@@ -396,6 +402,7 @@ public class GestionMouvement {
 
         } catch ( TimeoutException e ) {
             logger.debug( "detectionObstacle : Timeout dépassé, pas d'obstacle detecté :" + e.toString() );
+            // socket.fctRestartSocketCapteur();
             return -2;
         }
 
@@ -457,7 +464,7 @@ public class GestionMouvement {
             }
             else
             {
-                logger.debug( "arret" );
+                logger.debug( "nettoyage : arret" );
                 arretRobot();
                 logger.debug( "-----------------" );
 
@@ -505,7 +512,7 @@ public class GestionMouvement {
                     }
                     else if ( continuerTraitement && retourDetection == -2 )
                     {
-                        logger.info( "nettoyage : Pas dobstacle, on reboucle pour la merche avant" );
+                        logger.info( "nettoyage : Pas dobstacle, on reboucle pour la marche avant" );
                         obstacle = false;
                     }
                     else
@@ -1119,7 +1126,7 @@ public class GestionMouvement {
                             positionX = PositionRobot.getInstancePosition().getPositionX();
                             positionY = PositionRobot.getInstancePosition().getPositionY();
                             angle = PositionRobot.getInstancePosition().getAngle();
-                            logger.debug( "" );
+                            // logger.debug( "" );
                             logger.debug( "retourAlaBase : positionX =" + positionX + ", postionY =" + positionY
                                     + ", angle ="
                                     + angle );

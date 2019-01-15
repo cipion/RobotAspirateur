@@ -210,7 +210,7 @@ void GestionCapteurs::runCapteur(int numCpt, bool *detection, int *distance, boo
 	do
 	{
 		lock.lock();
-		//cout << "capteur " << numCpt << " run =" << *run << endl;
+		cout << "capteur " << numCpt << " run =" << *run << endl;
 		tmpDist = sonar.distance(timeout);
 		lock.unlock();
 		this_thread::sleep_for(std::chrono::milliseconds((int) tempsRafraichissement));

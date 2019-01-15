@@ -1,0 +1,16 @@
+[Unit]
+Description=driversRobot
+After=syslog.service
+
+[Service]
+ExecStart=driversRobot start
+ExecStop=driversRobot stop
+WorkingDirectory=/home/RobotAspirateur/
+StandardOutput=inherit
+StandardError=inherit
+Restart=on-abnormal
+User=pi
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

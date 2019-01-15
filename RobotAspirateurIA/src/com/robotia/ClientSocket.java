@@ -72,7 +72,7 @@ public class ClientSocket {
      * 
      * @return 1 si succes ou 0 si erreur
      */
-    public Boolean initSocket()
+    public boolean initSocket()
     {
         // recupere l'adresse IP des drivers via une properties
         try {
@@ -86,67 +86,82 @@ public class ClientSocket {
 
         logger.info( "initSocket : Initialisation des sockets" );
 
+        boolean init1 = fctInitSocketMoteur();
+        boolean init2 = fctInitSocketCapteur();
+
+        return ( init1 && init2 ) ? true : false;
+
+    }
+
+    public boolean fctInitSocketMoteur()
+    {
         // ouverture des socket input et output pour le driver des moteurs
         try {
-            logger.debug( "initSocket : hostSocket = " + hostSocket + " portSocketMoteur = " + portSocketMoteur );
+            logger.debug( "fctInitSocketMoteur : hostSocket = " + hostSocket + " portSocketMoteur = "
+                    + portSocketMoteur );
             socketMoteur = new Socket( hostSocket, portSocketMoteur );
 
-            logger.debug( "initSocket : Initialisation des outputStream" );
+            logger.debug( "fctInitSocketMoteur : Initialisation des outputStream" );
             osMoteur = socketMoteur.getOutputStream();
             oswMoteur = new OutputStreamWriter( osMoteur );
             messageSendMoteur = new BufferedWriter( oswMoteur );
 
-            logger.debug( "initSocket : Initialisation des inputStream" );
+            logger.debug( "fctInitSocketMoteur : Initialisation des inputStream" );
             isMoteur = socketMoteur.getInputStream();
             isrMoteur = new InputStreamReader( isMoteur );
             messageReceiveMoteur = new BufferedReader( isrMoteur );
 
-            logger.debug( "initSocket : Initialisation socket moteur finie" );
+            logger.debug( "fctInitSocketMoteur : Initialisation socket moteur finie" );
 
         } catch ( UnknownHostException e ) {
 
-            logger.error( "initSocket : probleme d'initialisation des sockets : " + e.toString() );
+            logger.error( "fctInitSocketMoteur : probleme d'initialisation des sockets : " + e.toString() );
             return false;
 
         } catch ( IOException e ) {
 
-            logger.error( "initSocket : probleme d'initialisation des sockets : " + e.toString() );
-            return false;
-        }
-
-        // ouverture des sockets input et output du driver des capteurs
-        try {
-            logger.debug( "initSocket : hostSocket = " + hostSocket + " portSocketCapteur = " + portSocketMoteur );
-            socketCapteur = new Socket( hostSocket, portSocketCapteur );
-
-            logger.debug( "initSocket : Initialisation des outputStream" );
-            osCapteur = socketCapteur.getOutputStream();
-            oswCapteur = new OutputStreamWriter( osCapteur );
-            messageSendCapteur = new BufferedWriter( oswCapteur );
-
-            logger.debug( "initSocket : Initialisation des inputStream" );
-            isCapteur = socketCapteur.getInputStream();
-            isrCapteur = new InputStreamReader( isCapteur );
-            messageReceiveCapteur = new BufferedReader( isrCapteur );
-
-            logger.debug( "Initialisation socket moteur finie" );
-
-        } catch ( UnknownHostException e ) {
-
-            logger.error( "initSocket : probleme d'initialisation des sockets : " + e.toString() );
-            return false;
-
-        } catch ( IOException e ) {
-
-            logger.error( "initSocket : probleme d'initialisation des sockets : " + e.toString() );
-            return false;
-        } catch ( NullPointerException e ) {
-            logger.error( "initSocket : erreur d'initialisation des socket : " + e.toString() );
+            logger.error( "fctInitSocketMoteur : probleme d'initialisation des sockets : " + e.toString() );
             return false;
         }
 
         return true;
+    }
 
+    public boolean fctInitSocketCapteur()
+    {
+        // ouverture des sockets input et output du driver des capteurs
+        try {
+            logger.debug( "fctInitSocketCapteur : hostSocket = " + hostSocket + " portSocketCapteur = "
+                    + portSocketCapteur );
+            socketCapteur = new Socket( hostSocket, portSocketCapteur );
+
+            logger.debug( "fctInitSocketCapteur : Initialisation des outputStream" );
+            osCapteur = socketCapteur.getOutputStream();
+            oswCapteur = new OutputStreamWriter( osCapteur );
+            messageSendCapteur = new BufferedWriter( oswCapteur );
+
+            logger.debug( "fctInitSocketCapteur : Initialisation des inputStream" );
+            isCapteur = socketCapteur.getInputStream();
+            isrCapteur = new InputStreamReader( isCapteur );
+            messageReceiveCapteur = new BufferedReader( isrCapteur );
+
+            logger.debug( "fctInitSocketCapteur : Initialisation socket moteur finie" );
+
+        } catch ( UnknownHostException e ) {
+
+            logger.error( "fctInitSocketCapteur : probleme d'initialisation des sockets : " + e.toString() );
+            return false;
+
+        } catch ( IOException e ) {
+
+            logger.error( "fctInitSocketCapteur : probleme d'initialisation des sockets : " + e.toString() );
+            return false;
+        } catch ( NullPointerException e ) {
+            logger.error( "fctInitSocketCapteur : erreur d'initialisation des socket : " + e.toString() );
+            return false;
+        }
+
+        return true;
     }
 
     /*****
@@ -157,7 +172,17 @@ public class ClientSocket {
     public Boolean stopSocket()
     {
         logger.info( "stopSocket : Arret des sockets en cours ..." );
+        boolean stop1 = fctStopSocketCapteur();
+        boolean stop2 = fctStopSocketMoteur();
+
+        return ( stop1 && stop2 ) ? true : false;
+
+    }
+
+    public boolean fctStopSocketCapteur()
+    {
         try {
+
             // arret des flux input et output du driver moteur
             socketMoteur.close();
             messageReceiveMoteur.close();
@@ -166,6 +191,23 @@ public class ClientSocket {
             messageSendMoteur.close();
             isrMoteur.close();
             isMoteur.close();
+
+            logger.info( "fctStopSocketCapteur : Sockets Moteurs arretés" );
+
+            return true;
+
+        } catch ( IOException e ) {
+            logger.error( "fctStopSocketCapteur : probleme d'arret du socket des Moteurs : " + e.toString() );
+            return false;
+        } catch ( NullPointerException e ) {
+            logger.error( "fctStopSocketCapteur : erreur de fermeture du socket des Moteurs : " + e.toString() );
+            return false;
+        }
+    }
+
+    public boolean fctStopSocketMoteur()
+    {
+        try {
 
             // arret des flux input et output du driver des capteurs
             socketCapteur.close();
@@ -176,18 +218,17 @@ public class ClientSocket {
             isrCapteur.close();
             isCapteur.close();
 
-            logger.info( "stopSocket : Sockets arretés" );
+            logger.info( "fctStopSocketCapteur : Sockets arretés" );
 
             return true;
 
         } catch ( IOException e ) {
-            logger.error( "stopSocket : probleme d'arret des sockets : " + e.toString() );
+            logger.error( "fctStopSocketCapteur : probleme d'arret du socket des Capteurs : " + e.toString() );
             return false;
         } catch ( NullPointerException e ) {
-            logger.error( "stopSocket : erreur de fermeture des sockets : " + e.toString() );
+            logger.error( "fctStopSocketCapteur : erreur de fermeture du socket des Capteurs : " + e.toString() );
             return false;
         }
-
     }
 
     /******
@@ -200,7 +241,10 @@ public class ClientSocket {
      */
     public String setDriverMoteurStatut( Commandes cmd, int vitesse, int direction )
     {
-        logger.info( "setDriverMoteurStatut : Commande " + cmd.toString()
+
+        int IDcommande = (int) ( Math.random() * ( 1000 - 0 ) );
+        int IDretour = 0;
+        logger.info( "setDriverMoteurStatut : ID = " + IDcommande + " : Commande " + cmd.toString()
                 + " des moteurs demandée avec les parametres Vitesse=" + vitesse
                 + " direction=" + direction );
 
@@ -212,14 +256,34 @@ public class ClientSocket {
         {
             logger.debug( "setDriverMoteurStatut : Envoi de la commande START" );
             try {
-                msgStart = Commandes.START.toString() + ";" + vitesse + ";" + direction;
+                msgStart = Commandes.START.toString() + ";" + vitesse + ";" + direction + ";0;" + IDcommande;
                 messageSendMoteur.write( msgStart );
                 messageSendMoteur.flush();
 
-                logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
-                message = messageReceiveMoteur.readLine();
+                int i = 0;
+                do {
+                    logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
+                    message = messageReceiveMoteur.readLine();
 
-                if ( message.equals( "1" ) )
+                    IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                    if ( IDretour == -1 )
+                    {
+                        logger.error( "getDetectionObstacle : Erreur de traitenemt de la commande" );
+                        return "-1";
+                    }
+
+                    if ( i == 3 )
+                    {
+                        logger.error( "setDriverMoteurStatut : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                        return "-1";
+                    }
+
+                } while ( IDretour != IDcommande );
+
+                String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+                if ( codeRetour.equals( "1" ) )
                 {
                     logger.info( "setDriverMoteurStatut : Les moteurs sont démarrés" );
 
@@ -247,14 +311,34 @@ public class ClientSocket {
         {
             logger.debug( "setDriverMoteurStatut : Envoi de la commande STOP" );
             try {
-                msgStop = Commandes.STOP.toString() + ";" + vitesse + ";" + direction;
+                msgStop = Commandes.STOP.toString() + ";" + vitesse + ";" + direction + ";0;" + IDcommande;
                 messageSendMoteur.write( msgStop );
                 messageSendMoteur.flush();
 
-                logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
-                message = messageReceiveMoteur.readLine();
+                int i = 0;
+                do {
+                    logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
+                    message = messageReceiveMoteur.readLine();
 
-                if ( !message.equals( "-1" ) )
+                    IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                    if ( IDretour == -1 )
+                    {
+                        logger.error( "getDetectionObstacle : Erreur de traitenemt de la commande" );
+                        return "-1";
+                    }
+
+                    if ( i == 3 )
+                    {
+                        logger.error( "setDriverMoteurStatut : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                        return "-1";
+                    }
+
+                } while ( IDretour != IDcommande );
+
+                String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+                if ( !codeRetour.equals( "-1" ) )
                 {
                     logger.info( "setDriverMoteurStatut : Les moteurs sont éteints, retour =" + message );
                     return message;
@@ -296,7 +380,9 @@ public class ClientSocket {
      */
     public Boolean setDriverMoteurStatut( Commandes cmd, int vitesse, int direction, int nbPas )
     {
-        logger.info( "setDriverMoteurStatut : Commande " + cmd.toString()
+        int IDcommande = (int) ( Math.random() * ( 1000 - 0 ) );
+        int IDretour = 0;
+        logger.info( "setDriverMoteurStatut : ID = " + IDcommande + " : Commande " + cmd.toString()
                 + " des moteurs demandée avec les parametres Vitesse=" + vitesse
                 + " direction=" + direction + ", nbPas=" + nbPas );
 
@@ -309,14 +395,35 @@ public class ClientSocket {
         {
             logger.debug( "setDriverMoteurStatut : Envoi de la commande START" );
             try {
-                msgStart = Commandes.START.toString() + ";" + vitesse + ";" + direction + ";" + nbPas;
+                msgStart = Commandes.START.toString() + ";" + vitesse + ";" + direction + ";" + nbPas + ";"
+                        + IDcommande;
                 messageSendMoteur.write( msgStart );
                 messageSendMoteur.flush();
 
-                logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
-                message = messageReceiveMoteur.readLine();
+                int i = 0;
+                do {
+                    logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
+                    message = messageReceiveMoteur.readLine();
 
-                if ( message.equals( "1" ) )
+                    IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                    if ( IDretour == -1 )
+                    {
+                        logger.error( "getDetectionObstacle : Erreur de traitenemt de la commande" );
+                        return false;
+                    }
+
+                    if ( i == 3 )
+                    {
+                        logger.error( "setDriverMoteurStatut : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                        return false;
+                    }
+
+                } while ( IDretour != IDcommande );
+
+                String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+                if ( codeRetour.equals( "1" ) )
                 {
                     logger.info( "setDriverMoteurStatut : Les moteurs sont démarrés" );
                     return true;
@@ -361,14 +468,29 @@ public class ClientSocket {
             }
 
             try {
-                msgStart = Commandes.ROTATE.toString() + ";" + vitesse + ";" + direction + ";" + nbPas;
+                msgStart = Commandes.ROTATE.toString() + ";" + vitesse + ";" + direction + ";" + nbPas + ";"
+                        + IDcommande;
                 messageSendMoteur.write( msgStart );
                 messageSendMoteur.flush();
 
-                logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
-                message = messageReceiveMoteur.readLine();
+                int i = 0;
+                do {
+                    logger.debug( "setDriverMoteurStatut : Recupération du message de retour" );
+                    message = messageReceiveMoteur.readLine();
 
-                if ( message.equals( "1" ) )
+                    IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                    if ( i == 3 )
+                    {
+                        logger.error( "setDriverMoteurStatut : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                        return false;
+                    }
+
+                } while ( IDretour != IDcommande );
+
+                String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+                if ( codeRetour.equals( "1" ) )
                 {
                     logger.info( "setDriverMoteurStatut : Les moteurs sont démarrés" );
                     return true;
@@ -407,17 +529,42 @@ public class ClientSocket {
      */
     public String getDetectionObstacle()
     {
-        logger.debug( "getDetectionObstacle : Envoi de la commande GET au driver des capteurs" );
+        int IDcommande = (int) ( Math.random() * ( 1000 - 0 ) );
+        int IDretour = 0;
+        logger.debug( "getDetectionObstacle : ID = " + IDcommande
+                + " : Envoi de la commande GET au driver des capteurs" );
         try {
-            msgGET = Commandes.GET.toString();
+            msgGET = Commandes.GET.toString() + ";0;" + IDcommande;
+
             messageSendCapteur.write( msgGET );
+
             messageSendCapteur.flush();
             logger.info( "getDetectionObstacle : Commande GET envoyée au driver des capteurs" );
 
-            logger.debug( "getDetectionObstacle : Recupération du message de retour" );
-            message = messageReceiveCapteur.readLine();
+            int i = 0;
+            do {
+                logger.debug( "getDetectionObstacle : Recupération du message de retour" );
+                message = messageReceiveCapteur.readLine();
 
-            if ( message.equals( "-1" ) )
+                IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                if ( IDretour == -1 )
+                {
+                    logger.error( "getDetectionObstacle : Erreur de traitenemt de la commande" );
+                    return "-2";
+                }
+
+                if ( i == 3 )
+                {
+                    logger.error( "getDetectionObstacle : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                    return "-2";
+                }
+
+            } while ( IDretour != IDcommande );
+
+            String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+            if ( codeRetour.equals( "1" ) )
             {
                 logger.error( "getDetectionObstacle : Erreur de traitement du driver" );
 
@@ -453,17 +600,41 @@ public class ClientSocket {
      */
     public String getDetectionObstacle( int timeout )
     {
-        logger.debug( "getDetectionObstacle : Envoi de la commande GET au driver des capteurs" );
+        int IDcommande = (int) ( Math.random() * ( 1000 - 0 ) );
+        int IDretour = 0;
+        logger.debug( "getDetectionObstacle : ID= " + IDcommande
+                + " : Envoi de la commande GET au driver des capteurs avec timeout = "
+                + timeout );
         try {
-            msgGET = Commandes.GET.toString() + ";" + timeout;
+            msgGET = Commandes.GET.toString() + ";" + timeout + ";" + IDcommande;
             messageSendCapteur.write( msgGET );
             messageSendCapteur.flush();
             logger.info( "getDetectionObstacle : Commande GET envoyée au driver des capteurs" );
 
-            logger.debug( "getDetectionObstacle : Recupération du message de retour" );
-            message = messageReceiveCapteur.readLine();
+            int i = 0;
+            do {
+                logger.debug( "getDetectionObstacle : Recupération du message de retour" );
+                message = messageReceiveCapteur.readLine();
 
-            if ( message.equals( "-1" ) )
+                IDretour = Integer.parseInt( message.substring( message.lastIndexOf( ";" ) + 1 ) );
+
+                if ( IDretour == -1 )
+                {
+                    logger.error( "getDetectionObstacle : Erreur de traitenemt de la commande" );
+                    return "-2";
+                }
+
+                if ( i == 3 )
+                {
+                    logger.error( "getDetectionObstacle : Erreur, 3 essais de reception de message avec le mauvais ID" );
+                    return "-2";
+                }
+
+            } while ( IDretour != IDcommande );
+
+            String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+            if ( codeRetour.equals( "1" ) )
             {
                 logger.error( "getDetectionObstacle : Erreur de traitement du driver" );
 
@@ -496,9 +667,10 @@ public class ClientSocket {
      */
     public String stopDetection()
     {
+        int IDcommande = (int) ( Math.random() * ( 1000 - 0 ) );
         logger.debug( "stopDetection : Envoi de la commande STOP au driver des capteurs" );
         try {
-            msgStop = Commandes.STOP.toString();
+            msgStop = Commandes.STOP.toString() + ";0;" + IDcommande;
             messageSendCapteur.write( msgStop );
             messageSendCapteur.flush();
             logger.info( "stopDetection : Commande STOP envoyée au driver des capteurs" );
@@ -506,7 +678,9 @@ public class ClientSocket {
             logger.debug( "stopDetection : Recupération du message de retour" );
             message = messageReceiveCapteur.readLine();
 
-            if ( message.equals( "-1" ) )
+            String codeRetour = message.substring( 0, message.indexOf( ";" ) );
+
+            if ( codeRetour.equals( "1" ) )
             {
                 logger.error( "stopDetection : Erreur de traitement du driver" );
 
@@ -527,6 +701,16 @@ public class ClientSocket {
         }
 
         return message;
+
+    }
+
+    public boolean fctRestartSocketCapteur()
+    {
+        logger.debug( "fctRestartSocketCapteur : Redémarrage du socket" );
+        boolean stop = fctStopSocketCapteur();
+        boolean start = fctInitSocketCapteur();
+
+        return ( stop && start ) ? true : false;
 
     }
 

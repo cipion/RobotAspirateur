@@ -1,0 +1,98 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          driversRobot
+# Required-Start:    $remote_fs $syslog $local_fs $network
+# Required-Stop:     $remote_fs $syslog $local_fs $network
+# Should-Start:      $named
+# Should-Stop:       $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Starts Robot's drivers daemon
+# Description:       DriverCapter et DriverMoteur
+### END INIT INFO
+
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+
+start()
+{
+	rm -f /home/RobotAspirateur/DriverCapteur/bin/nohup.out
+	cd /home/RobotAspirateur/DriverCapteur/bin/
+	nohup ./CapteurRobotAspirateur &
+
+	rm -f /home/RobotAspirateur/DriverMoteur/bin/nohup.out
+	cd /home/RobotAspirateur/DriverMoteur/bin/
+	nohup ./RobotAspirateur &
+
+}
+
+stop()
+{
+	numProc=`ps -eaf | grep RobotAspirateur | grep -v grep | grep -v sh | awk '{print $2}'`
+	echo "arret du processus RobotAspirateur : $numProc"
+	kill $numProc
+}
+
+restart()
+{
+	stop
+	start
+}
+
+status()
+{
+	PROCESSCAPTEUR=`ps -eaf | grep "./CapteurRobotAspirateur" | grep -v grep | awk '{print $2}'`
+	
+	if [ ! -z "$PROCESSCAPTEUR" ]
+	then
+		echo "Processus actif du driver des Catpeurs : $PROCESSCAPTEUR"
+	else
+		echo "Il n'y a pas de processus pour le driver capteur"
+	fi
+	
+	PROCESSMOTEUR=`ps -eaf | grep "./RobotAspirateur" | grep -v grep | grep -v sh | awk '{print $2}'`
+	
+	if [ ! -z "$PROCESSMOTEUR" ]
+	then
+		echo "Processus actif du driver des moteurs : $PROCESSMOTEUR"
+	else
+		echo "Il n'y a pas de processus pour le driver moteur"
+	fi 
+}
+
+NBPROCESS=`ps -eaf | grep -i robot | grep -v grep | grep -v driversRobot | wc -l`
+
+
+case "$1" in
+	start)
+		if [ $NBPROCESS -ne 0 ]
+		then 
+			echo "Des processus des drivers fonctionnent actuellement, on les arretes."
+			stop
+		fi
+		echo "Demarrage des drivres du robot"
+		start
+		;;
+	stop)
+		echo "Arret des drivers du robot"
+		stop
+		;;
+		
+	restart)
+		echo "Arret/Relance des drivers"
+		restart
+		;;
+	status)
+		echo "Affichage du statut"
+		status
+		;;
+	*)
+		echo "ERREUR : Les commandes doivent etre start, stop, restart ou status"
+		exit 1
+		;;
+esac
+
+exit 0
+	
