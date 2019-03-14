@@ -16,7 +16,6 @@
 #include <math.h>       /* fabs */
 #include "config.h"
 #include "libSonar.h"
-#include <mutex>
 #include <sys/socket.h>
 
 // distance en cm

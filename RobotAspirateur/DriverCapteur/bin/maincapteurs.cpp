@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string>
 #include <pthread.h>
+#include <mutex>
 #include "log.h"
 #include "gestioncapteurs.h"
 #include <regex>
@@ -53,12 +54,14 @@ bool stop = false;
 GestionCapteurs capteur;
 
 // regex pour valider le bon format de la commande
-regex const pattern { "^[a-zA-Z]\{0,4}[;]\{0,1}[0-9]\{0,1}$" };
+regex const pattern { "^[a-zA-Z]\{0,4}(;)[0-9](;)[0-9]\{1,4}$" };
 
 string message;
 bool run=true;
 
 char bufferCopie[256];
+
+std::mutex lockt;
 
 /***********************************
 * Fonction de reception des signaux.
@@ -73,11 +76,11 @@ void signalHandler(int signal){
 
 	if(signal==SIGINT){
 		
-		log.info("signalHandler : Signal Ctrl^c reçu\n");
+		log.info("Maincapteurs : signalHandler : Signal Ctrl^c reçu\n");
 		stop=true;
 		if (run)
 		{
-			log.info("signalHandler : arret de la detection necessaire");
+			log.info("Maincapteurs : signalHandler : arret de la detection necessaire");
 			capteur.stopDetection();
 		}
 		
@@ -110,7 +113,7 @@ int main(int argc, char* argv[])
 	
 	char buffer[256];
 
-	log.info("main : Debut du programme");
+	log.info("Maincapteurs : main : Debut du programme");
     log.space();
 	
     pthread_t threadA[3];
@@ -137,7 +140,7 @@ int main(int argc, char* argv[])
 	sigaction(SIGINT, &action, &oldAction);
 	/*************************** Fin de pas touche ******************************/
 
-	 log.info("main : création du socket");
+	 log.info("Maincapteurs : main : création du socket");
 	
 	/********************************
 	Demarrage du serveur de socket
@@ -154,7 +157,7 @@ int main(int argc, char* argv[])
     
     if(listenFd < 0)
     {
-        log.erreur("main : Cannot open socket");
+        log.erreur("Maincapteurs : main : Cannot open socket");
         return 0;
     }
     
@@ -167,7 +170,7 @@ int main(int argc, char* argv[])
     //bind socket
     if(bind(listenFd, (struct sockaddr *)&svrAdd, sizeof(svrAdd)) < 0)
     {
-        log.erreur("Cannot bind");
+        log.erreur("Maincapteurs : main : Cannot bind");
         return 0;
     }
     
@@ -186,12 +189,12 @@ int main(int argc, char* argv[])
 		
 		if (connFd < 0)
 		{
-			log.erreur("main : Cannot accept connection");
+			log.erreur("Maincapteurs : main : Cannot accept connection");
 			return 0;
 		}
 		else
 		{
-			log.info("main : Connection successful connFd =" + to_string(connFd));
+			log.info("Maincapteurs : main : Connection successful connFd =" + to_string(connFd));
 		}
 			
 		int noThread = 0, n=0;
@@ -199,8 +202,9 @@ int main(int argc, char* argv[])
 		
 		while (run)
 		{
+			log.info("Maincapteurs : main : Nombre de thread = " + to_string(noThread) + " cree");
 			bzero(buffer, 257);
-			log.info("main : attente de reception d'un message...");
+			log.info("Maincapteurs : main : attente de reception d'un message...");
 			//n = read(connFd,buffer,255);
 			while((n = recv(connFd,buffer,255, 0)) <0)
 			{
@@ -215,15 +219,15 @@ int main(int argc, char* argv[])
 			//log.info("task1 : message client ='" + message + "', j=" + to_string(j) + ", n=" + to_string(n));
 			
 			if (n < 0 )
-				log.erreur("main : ERROR reading from socket ");
+				log.erreur("Maincapteurs : main : ERROR reading from socket ");
 			else if (n != 0)
 			{
-				log.info("main : creation d'un thread pour analyser la commande :" + message);
+				log.info("Maincapteurs : main : creation d'un thread pour analyser la commande :" + message);
 				
 				//thread_cpt1= new thread(&GestionCapteurs::runCapteur, this, 1, &detectionCpt1, &distance, &run);
 				pthread_create(&threadA[noThread], NULL, task1, (void *) connFd); 
 			
-				log.info("main : Thread " + to_string(noThread) + " cree");
+				log.info("Maincapteurs : main : Thread " + to_string(noThread) + " cree");
 				
 				noThread++;
 				
@@ -231,7 +235,7 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				log.info("main : Erreur message vide ou connexion interrompue");
+				log.info("Maincapteurs : main : Erreur message vide ou connexion interrompue");
 				run = false;
 			}
 			
@@ -253,7 +257,7 @@ void *task1 ( void *socnum)
 {
 	// Fonction pour afficher et enregister les log
 	Log log;
-    log.info("task1 : Thread No: "+ to_string(pthread_self()) + " message =" + (string)message);
+    log.info("Maincapteurs : task1 : Thread Identifiant: "+ to_string(pthread_self()) + ", message =" + (string)message);
     
     
     
@@ -264,7 +268,7 @@ void *task1 ( void *socnum)
 	
 	int connFd = (int) socnum;
 	
-	log.info("task1 : connFd =" + to_string(connFd));
+	log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : connFd =" + to_string(connFd));
 	
 	
 	
@@ -274,73 +278,78 @@ void *task1 ( void *socnum)
 		//message.erase((string)message.size()-1,1);
 			
 			
-			log.info("task1 : commande du client='" + (string)message + "'");
-	
+			log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : commande du client='" + (string)message + "'");
+			
 	
 			
 			if(regex_match((string)message, pattern))
 			{
-				log.info("task1 : la regex est valide");
+				log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : la regex est valide");
+				
+				capteur.stopDetection();
+				lockt.lock();
 				
 				i=0;
 				parametres[1]="";
+				parametres[2]="";
 				char *token = strtok(bufferCopie, ";");
-				while (token != NULL && i < 2) {
+				while (token != NULL && i < 3) {
 					parametres[i]= token;
 					token = strtok(NULL, ";");
 					i++;
 				}
 				
+				int IDcommande = stoi(parametres[2]);
 				
-				
-				log.info("task1 : Commande = '" + parametres[0] +"' avec timeout = " + parametres[1] );
+				log.info("Maincapteurs : task1 : ID= " + to_string(IDcommande) + " : "+ to_string(pthread_self()) + " : Commande = '" + parametres[0] +"' avec timeout = " + parametres[1] );
 				
 				if (parametres[0] == "GET")
 				{
-					log.info("task1 : Demarrage de la detection d'obstcle");
+					log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : Demarrage de la detection d'obstcle");
 					// capteur.detectionObstacle();
-					if(parametres[1].empty())
+					
+					if(stoi(parametres[1]) == 0)
 					{
-						retourClient= capteur.detectionObstacle(  ) + "\n";
+						retourClient= capteur.detectionObstacle(  ) + ";" + to_string(IDcommande) + "\n";
 					}
 					else
 					{
-						retourClient= capteur.detectionObstacle(  stoi(parametres[1]) ) + "\n";
+						retourClient= capteur.detectionObstacle(  stoi(parametres[1]) ) + ";" + to_string(IDcommande) + "\n";
 					}
 					
 				}
 				else if (parametres[0] == "stop")
 				{
-					log.info("task1 : arret de la detection d'obstcle");
+					log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : arret de la detection d'obstcle");
 					// capteur.detectionObstacle();
-					retourClient= to_string(capteur.stopDetection()) + "\n";
+					retourClient= to_string(capteur.stopDetection()) + ";" + to_string(IDcommande) + "\n";
 					
 				}
 				else
 				{
-					log.erreur("task1 : La commande du client est differente de GET ou stop");
-					retourClient="-1\n";
+					log.erreur("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : La commande du client est differente de GET ou stop");
+					retourClient= "-1;" + to_string(IDcommande) + "\n";
 					
 				}
 		
-				
+				lockt.unlock();
 	
 			}
 			else
 			{
-				log.erreur("task1 : La commande du client est mauvaise : regex non validee");
-				retourClient="-1\n";
+				log.erreur("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : La commande du client est mauvaise : regex non validee");
+				retourClient="-1;-1\n";
 				
 			}
 			
 			// This send() function sends the 13 bytes of the string to the new socket
-			log.info("task1 : retourClient =" + retourClient);
+			log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : retourClient =" + retourClient);
 			if (send(connFd, retourClient.c_str(), retourClient.size(), 0) == -1)
 			{
-				log.erreur("task1 : Erreur d'envoi du message retour");
+				log.erreur("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : Erreur d'envoi du message retour");
 			}
 			else
-				log.info("task1 : succes d'envoi du message de retour");
+				log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : succes d'envoi du message de retour");
 				
 			//write(connFd, retourClient.c_str(), retourClient.size());
 			retourClient.clear();
@@ -349,11 +358,11 @@ void *task1 ( void *socnum)
 		
 		
 		j++;
-		log.info("task1 : fin boucle");
+		log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : fin boucle");
 	
 		
 		
 		
-    log.info("task1 : Closing thread ");
+    log.info("Maincapteurs : task1 : "+ to_string(pthread_self()) + " : Closing thread ");
     
 }

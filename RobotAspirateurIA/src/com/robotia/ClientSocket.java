@@ -682,7 +682,7 @@ public class ClientSocket {
 
             if ( codeRetour.equals( "1" ) )
             {
-                logger.error( "stopDetection : Erreur de traitement du driver" );
+                logger.error( "stopDetection : Succes d'arret de la detection" );
 
             }
             else

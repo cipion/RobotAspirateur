@@ -24,13 +24,22 @@ int GestionCapteurs::getDistanceCapeteur(int numCpt)
 
 string GestionCapteurs::detectionObstacle( int timeout)
 {
-	log.info("detectionObstacle : lancement de la detection d'obstacle");
+	log.info("GestionCapteurs : detectionObstacle : lancement de la detection d'obstacle");
 	run = true;
 	detectionCpt1=false;
 	detectionCpt2=false;
 	detectionCpt3=false;
 	unsigned int timeoutMillis = timeout * 1000;
 	unsigned int startmilliSeconde = 0;
+	int tempsRafraichissement = stoi(config.find("tempsRafraichissement")->second);
+	
+	do
+	{
+		//testThread();
+		this_thread::sleep_for(std::chrono::milliseconds(100));
+	}while ( th1run == true && th2run == true && th3run == true);
+	
+	log.info("GestionCapteurs : detectionObstacle : Creation des thread");
 	
 	
 	thread_cpt1= new thread(&GestionCapteurs::runCapteur, this, 1, &detectionCpt1, &distance, &run);
@@ -40,29 +49,32 @@ string GestionCapteurs::detectionObstacle( int timeout)
 	
 	string orientationCpt ="";
 	
-	log.info("detectionObstacle : Attente de la detection d'obstacle par les thread...");
+	log.info("GestionCapteurs : detectionObstacle : Attente de la detection d'obstacle par les thread...");
 	
 	startmilliSeconde = millis();
 	
 	if ( timeout == 0)
 	{
-		log.info("detectionObstacle : pas de timeout, attente de detection");
+		log.info("GestionCapteurs : detectionObstacle : pas de timeout, attente de detection");
 		
 		while(detectionCpt1 == false && detectionCpt2 == false && detectionCpt3 == false && run == true) 
 		{
-			
+			this_thread::sleep_for(std::chrono::milliseconds((int) tempsRafraichissement));
 		}
 	}
 	else
 	{
-		log.info("detectionObstacle : attente detection ou timeout de " + to_string(timeout) + "secondes");
-		while(detectionCpt1 == false && detectionCpt2 == false && detectionCpt3 == false && (timeoutMillis > (millis() - startmilliSeconde)) && run == true ) {}
+		log.info("GestionCapteurs : detectionObstacle : attente detection ou timeout de " + to_string(timeout) + " secondes");
+		while(detectionCpt1 == false && detectionCpt2 == false && detectionCpt3 == false && (timeoutMillis > (millis() - startmilliSeconde)) && run == true ) 
+		{
+			this_thread::sleep_for(std::chrono::milliseconds((int) tempsRafraichissement));
+		}
 	}
 	
-	if (run == true)
+	/*if (run == true)
 	{
 		stopDetection();
-	}
+	}*/
 	
 	
 	
@@ -70,32 +82,29 @@ string GestionCapteurs::detectionObstacle( int timeout)
 	if (detectionCpt1 == true)
 	{
 		orientationCpt = "GAUCHE";
-		log.info("detectionObstacle : Detecteur gauche");
-		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
+		log.info("GestionCapteurs : detectionObstacle : Detecteur gauche");
 	}
 	else if (detectionCpt2 == true)
 	{
 		orientationCpt = "CENTRE";
-		log.info("detectionObstacle : Detecteur centre");
-		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
+		log.info("GestionCapteurs : detectionObstacle : Detecteur centre");
 	}
 	else if (detectionCpt3 == true)
 	{
 		orientationCpt = "DROITE";
-		log.info("detectionObstacle : Detecteur droite");
-		log.info("detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
+		log.info("GestionCapteurs : detectionObstacle : Detecteur droite");
 	}
 	else if (timeout == 0)
 	{
 		orientationCpt = "ARRET";
-		log.info("detectionObstacle : Arret");
+		log.info("GestionCapteurs : detectionObstacle : Arret");
 	}else
 	{
 		orientationCpt = "TIMEOUT";
-		log.info("detectionObstacle : Timeout");
+		log.info("GestionCapteurs : detectionObstacle : Timeout");
 	}
 	
-	
+	log.info("GestionCapteurs : detectionObstacle : Detection d'un capteur avec la distance de " + to_string(distance));
 	
 	return orientationCpt + ";" + to_string(distance);
 }
@@ -106,86 +115,101 @@ bool GestionCapteurs::testThread()
         if ( thread_cpt1->joinable())
         {
             th1run = true;
-            log.info("testThread : thread du capteur 1 fonctionne");
+            log.info("GestionCapteurs : testThread : thread du capteur 1 fonctionne");
         }
+		else
+		{
+			th1run = false;
+			log.info("GestionCapteurs : testThread : thread du capteur 1 arreté");
+		}
     
         if ( thread_cpt2->joinable())
         {
             th2run = true;
-            log.info("testThread : thread du capteur 2 fonctionne");
+            log.info("GestionCapteurs : testThread : thread du capteur 2 fonctionne");
         }
+		else
+		{
+			th2run = false;
+			log.info("GestionCapteurs : testThread : thread du capteur 2 arreté");
+		}
 		
         if ( thread_cpt3->joinable())
         {
             th3run = true;
-            log.info("testThread : thread du capteur 2 fonctionne");
+            log.info("GestionCapteurs : testThread : thread du capteur 2 fonctionne");
         }
+		else
+		{
+			th3run = false;
+			log.info("GestionCapteurs : testThread : thread du capteur 3 arreté");
+		}
 }
 
 int GestionCapteurs::stopDetection()
 {
 
-	log.info("stopDetection : demande d'arret des thread, run =" + to_string(run));
+	log.info("GestionCapteurs : stopDetection : demande d'arret des thread, run =" + to_string(run));
 	
 	if (run)
 	{
-		log.info("stopDetection : les thread fontionne, arret en cours");
+		log.info("GestionCapteurs : stopDetection : les thread fontionne, arret en cours");
 			run=false;
 		
 		if (th1run)
 		{
-			log.info("stopDetection : thread 1 is running ...");
+			log.info("GestionCapteurs : stopDetection : thread 1 is running ...");
 			if ( thread_cpt1->joinable())
 			{
 				th1run = false;
-				log.info("stopDetection : arret du thread 1 en cours ...");
+				log.info("GestionCapteurs : stopDetection : arret du thread 1 en cours ...");
 				thread_cpt1->join();
 				
-				log.info("stopDetection : thread du capteur 1 arrete");
+				log.info("GestionCapteurs : stopDetection : thread du capteur 1 arrete");
 			}
 		}
 		else
 		{
-			log.info("stopDetection : thread 1 isn't running");
+			log.info("GestionCapteurs : stopDetection : thread 1 isn't running");
 		}
 		
 		if (th2run)
 		{
-			log.info("stopDetection : thread 2 is running ...");
+			log.info("GestionCapteurs : stopDetection : thread 2 is running ...");
 			if ( thread_cpt2->joinable())
 			{
 				th2run = false;
-				log.info("stopDetection : arret du thread 2 en cours ...");
+				log.info("GestionCapteurs : stopDetection : arret du thread 2 en cours ...");
 				thread_cpt2->join();
 				
-				log.info("stopDetection : thread du capteur 2 arrete");
+				log.info("GestionCapteurs : stopDetection : thread du capteur 2 arrete");
 			}
 		}
 		else
 		{
-			log.info("stopDetection : thread 2 isn't running");
+			log.info("GestionCapteurs : stopDetection : thread 2 isn't running");
 		}
 	
 		if (th3run)
 		{		
-			log.info("stopDetection : thread 3 is running ...");
+			log.info("GestionCapteurs : stopDetection : thread 3 is running ...");
 			if ( thread_cpt3->joinable())
 			{
 				th3run = false;
-				log.info("stopDetection : arret du thread 3 en cours ...");
+				log.info("GestionCapteurs : stopDetection : arret du thread 3 en cours ...");
 				thread_cpt3->join();
 				
-				log.info("stopDetection : thread du capteur 3 arrete");
+				log.info("GestionCapteurs : stopDetection : thread du capteur 3 arrete");
 			}
 		}
 		else
 		{
-			log.info("stopDetection : thread 3 isn't running");
+			log.info("GestionCapteurs : stopDetection : thread 3 isn't running");
 		}
 	}
 	else
 	{
-		log.info("stopDetection : les thread sont deja arretés");
+		log.info("GestionCapteurs : stopDetection : les thread sont deja arretés");
 	}
 	
 	return 1;
@@ -201,7 +225,7 @@ void GestionCapteurs::runCapteur(int numCpt, bool *detection, int *distance, boo
 	Sonar sonar;
 	
 	
-	log.info("runCapteur" + to_string(numCpt) + " : running with pinTrig" + to_string(numCpt) + "=" + to_string(pinTrig) + ", pinEcho " + to_string(numCpt) + "=" + to_string(pinEcho) );
+	log.info("GestionCapteurs : runCapteur" + to_string(numCpt) + " : running with pinTrig" + to_string(numCpt) + "=" + to_string(pinTrig) + ", pinEcho " + to_string(numCpt) + "=" + to_string(pinEcho) );
 	int tmpDist = 400;
 	 sonar.init(pinTrig, pinEcho);
 	
@@ -209,17 +233,23 @@ void GestionCapteurs::runCapteur(int numCpt, bool *detection, int *distance, boo
 	
 	do
 	{
-		lock.lock();
-		cout << "capteur " << numCpt << " run =" << *run << endl;
-		tmpDist = sonar.distance(timeout);
-		lock.unlock();
-		this_thread::sleep_for(std::chrono::milliseconds((int) tempsRafraichissement));
-		
 		if (*run == false)
 		{
-			cout << "runCapteur" + to_string(numCpt) + " : run = false" << endl;
+			log.info("GestionCapteurs : runCapteur" + to_string(numCpt) + " : run = false");
 			break;
 		}
+		log.info("GestionCapteurs : runCapteur " + to_string(numCpt) + " : wait");
+		lock.lock();
+		log.info("GestionCapteurs : runCapteur " + to_string(numCpt) + " : lock , run =" + to_string(*run));
+		
+				
+		
+		//this_thread::sleep_for(std::chrono::milliseconds((int) timeout));
+		tmpDist = sonar.distance(timeout, numCpt);
+		lock.unlock();
+		this_thread::sleep_for(std::chrono::milliseconds((int) tempsRafraichissement));
+		log.info("GestionCapteurs : runCapteur " + to_string(numCpt) + " : unlock");
+		
 			
 	}while(tmpDist > distanceMaxDetectee || tmpDist <= 0 );
 	
@@ -228,11 +258,11 @@ void GestionCapteurs::runCapteur(int numCpt, bool *detection, int *distance, boo
 		*distance = tmpDist;
 	    
 		*detection = true;
-		log.info("runCapteur" + to_string(numCpt) + " : distance=" + to_string(tmpDist));
+		log.info("GestionCapteurs : runCapteur" + to_string(numCpt) + " : distance=" + to_string(tmpDist));
 	}
 	else
 	{
-		log.info("runCapteur" + to_string(numCpt) + " : fin du thread car 'run'=" + to_string(*run));
+		log.info("GestionCapteurs : runCapteur" + to_string(numCpt) + " : fin du thread car 'run'=" + to_string(*run));
 	}
    
 	

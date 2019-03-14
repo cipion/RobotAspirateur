@@ -184,6 +184,11 @@ public class GestionMouvement {
 
         new Thread( timeoutTask ).start();
 
+        if ( timeoutTask.isDone() )
+        {
+            logger.debug( "marcheAvantRobot : Arret normal du thread, ajout des pas" );
+
+        }
         return true;
 
     }
@@ -266,7 +271,9 @@ public class GestionMouvement {
             if ( !continuerTraitement || stopDetection )
             {
                 statut = timeoutTask.cancel( true );
-                logger.info( "detectionObstacle : Demande d'arret du traitement =" + statut );
+                logger.info( "detectionObstacle :  continuerTraitement =" + continuerTraitement
+                        + ", stopDetection =" + stopDetection );
+                logger.info( "detectionObstacle :  Demande d'arret du traitement =" + statut );
             }
 
         }
@@ -560,8 +567,12 @@ public class GestionMouvement {
         int positionY = 0;
         int angle = 0;
 
+        logger.debug( "retourAlaBase : positionX =" + PositionRobot.getInstancePosition().getPositionX()
+                + ", postionY =" + PositionRobot.getInstancePosition().getPositionY()
+                + ", angle =" + PositionRobot.getInstancePosition().getAngle() );
+
         if ( PositionRobot.getInstancePosition().getPositionX() != 0
-                && PositionRobot.getInstancePosition().getPositionY() != 0 )
+                || PositionRobot.getInstancePosition().getPositionY() != 0 )
         {
             do
             {
@@ -752,6 +763,10 @@ public class GestionMouvement {
 
                                 }
 
+                                positionX = PositionRobot.getInstancePosition().getPositionX();
+                                positionY = PositionRobot.getInstancePosition().getPositionY();
+                                angle = PositionRobot.getInstancePosition().getAngle();
+
                                 if ( angle == 90 || angle == -90 )
                                 {
                                     logger.debug( "retourAlaBase : le robot n'est pas dans l'axe X alors on avance sur Y de seulement "
@@ -788,12 +803,12 @@ public class GestionMouvement {
                             }
                             else if ( positionX == 0 && positionY != 0 )
                             {
-                                logger.info( "retourAlaBase : obstacle detecté, positionX = 0 et positionY differente de 0, on analyse l'angle" );
+                                logger.info( "retourAlaBase : positionX = 0 et positionY differente de 0, on analyse l'angle" );
                                 if ( positionY > 0 )
                                 {
                                     if ( angle == 0 )
                                     {
-                                        logger.debug( "retourAlaBase : detection obstacle à 0° alors rotation de -90°" );
+                                        logger.debug( "retourAlaBase : angle =  0° alors rotation de -90°" );
                                         do
                                         {
 
@@ -857,6 +872,10 @@ public class GestionMouvement {
 
                                     }
 
+                                    positionX = PositionRobot.getInstancePosition().getPositionX();
+                                    positionY = PositionRobot.getInstancePosition().getPositionY();
+                                    angle = PositionRobot.getInstancePosition().getAngle();
+
                                     if ( angle == 0 || angle == 180 )
                                     {
                                         logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
@@ -864,10 +883,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( nbPasDecalage );
 
                                         retourDetection = detectionObstacle( timeoutDecalage );
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -880,10 +900,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( Math.abs( positionY ) );
 
                                         retourDetection = detectionObstacle();
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -959,6 +980,10 @@ public class GestionMouvement {
 
                                     }
 
+                                    positionX = PositionRobot.getInstancePosition().getPositionX();
+                                    positionY = PositionRobot.getInstancePosition().getPositionY();
+                                    angle = PositionRobot.getInstancePosition().getAngle();
+
                                     if ( angle == 0 || angle == 180 )
                                     {
                                         logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
@@ -966,10 +991,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( nbPasDecalage );
 
                                         retourDetection = detectionObstacle( timeoutDecalage );
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -982,10 +1008,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( Math.abs( positionY ) );
 
                                         retourDetection = detectionObstacle();
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -996,6 +1023,23 @@ public class GestionMouvement {
                                 {
                                     logger.error( "retourAlaBase : positionY invalide" );
                                     continuerTraitement = false;
+                                }
+                            }
+                            else if ( retourDetection != 0 && positionX < 0 )
+                            {
+                                logger.debug( "retourAlaBase : le robot doit revenir sur l'axe X de "
+                                        + ( positionX * -1 ) + " pas" );
+                                marcheAvantRobot( ( positionX * -1 ) );
+
+                                retourDetection = detectionObstacle( timeoutDecalage );
+
+                                if ( retourDetection == 0 )
+                                {
+                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                            + " demande d'arret du robot" );
+                                    arretRobot(); // une fois la
+                                                  // detection
+                                                  // faite ou
                                 }
                             }
                             else
@@ -1106,12 +1150,14 @@ public class GestionMouvement {
                                 + Math.abs( positionX ) + " pas" );
                         // Avancer tout droit
                         marcheAvantRobot( Math.abs( positionX ) );
+                        PositionRobot.getInstancePosition().ajouterNbPAs( -positionX );
 
                         int retourDetection = detectionObstacle();
-                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                + " demande d'arret du robot" );
-                        if ( retourDetection != 0 )
+
+                        if ( retourDetection == 0 )
                         {
+                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                    + " demande d'arret du robot" );
                             arretRobot(); // une fois la detection
                                           // faite ou
                         }
@@ -1265,6 +1311,10 @@ public class GestionMouvement {
 
                                 }
 
+                                positionX = PositionRobot.getInstancePosition().getPositionX();
+                                positionY = PositionRobot.getInstancePosition().getPositionY();
+                                angle = PositionRobot.getInstancePosition().getAngle();
+
                                 if ( angle == 90 || angle == -90 )
                                 {
                                     logger.debug( "retourAlaBase : le robot n'est pas dans l'axe X alors on avance sur Y de seulement "
@@ -1272,10 +1322,11 @@ public class GestionMouvement {
                                     marcheAvantRobot( nbPasDecalage );
 
                                     retourDetection = detectionObstacle( timeoutDecalage );
-                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                            + " demande d'arret du robot" );
-                                    if ( retourDetection != 0 )
+
+                                    if ( retourDetection == 0 )
                                     {
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
                                         arretRobot(); // une fois la
                                                       // detection
                                                       // faite ou
@@ -1288,10 +1339,11 @@ public class GestionMouvement {
                                     marcheAvantRobot( Math.abs( positionX ) );
 
                                     retourDetection = detectionObstacle();
-                                    logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                            + " demande d'arret du robot" );
-                                    if ( retourDetection != 0 )
+
+                                    if ( retourDetection == 0 )
                                     {
+                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                + " demande d'arret du robot" );
                                         arretRobot(); // une fois la detection
                                                       // faite ou
                                     }
@@ -1370,6 +1422,10 @@ public class GestionMouvement {
 
                                     }
 
+                                    positionX = PositionRobot.getInstancePosition().getPositionX();
+                                    positionY = PositionRobot.getInstancePosition().getPositionY();
+                                    angle = PositionRobot.getInstancePosition().getAngle();
+
                                     if ( angle == 0 || angle == 180 )
                                     {
                                         logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
@@ -1377,10 +1433,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( nbPasDecalage );
 
                                         retourDetection = detectionObstacle( timeoutDecalage );
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -1393,10 +1450,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( Math.abs( positionY ) );
 
                                         retourDetection = detectionObstacle();
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -1472,6 +1530,10 @@ public class GestionMouvement {
 
                                     }
 
+                                    positionX = PositionRobot.getInstancePosition().getPositionX();
+                                    positionY = PositionRobot.getInstancePosition().getPositionY();
+                                    angle = PositionRobot.getInstancePosition().getAngle();
+
                                     if ( angle == 0 || angle == 180 )
                                     {
                                         logger.debug( "retourAlaBase : le robot n'est pas dans l'axe Y, alors on avance sur l'axe X de seulement "
@@ -1479,10 +1541,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( nbPasDecalage );
 
                                         retourDetection = detectionObstacle( timeoutDecalage );
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
-                                        if ( retourDetection != 0 )
+
+                                        if ( retourDetection == 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -1495,10 +1558,11 @@ public class GestionMouvement {
                                         marcheAvantRobot( Math.abs( positionY ) );
 
                                         retourDetection = detectionObstacle();
-                                        logger.debug( "retourAlaBase : retourDetection= " + retourDetection
-                                                + " demande d'arret du robot" );
+
                                         if ( retourDetection != 0 )
                                         {
+                                            logger.debug( "retourAlaBase : retourDetection= " + retourDetection
+                                                    + " demande d'arret du robot" );
                                             arretRobot(); // une fois la
                                                           // detection
                                                           // faite ou
@@ -1522,7 +1586,7 @@ public class GestionMouvement {
                     }
                     else if ( positionX < 0 )
                     {
-                        logger.debug( "retourAlaBase : positionX > 0, angle du robot = 0 donc demi tour (180°)" );
+                        logger.debug( "retourAlaBase : positionX < 0, angle du robot = 180 donc demi tour (0°)" );
                         if ( rotationRobot( 180 ) )
                         {
                             logger.debug( "retourAlaBase : rotation 180° faite" );
