@@ -1,0 +1,175 @@
+Version 4.0 HI-TECH Software Intermediate Code
+[p mainexit ]
+"463 C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 463: extern volatile __control unsigned char TRIS __attribute__((address(0x006)));
+[v _TRIS `VWuc ~T0 @X0 0 e@6 ]
+"275
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 275:     struct {
+[s S16 :1 `uc 1 :1 `uc 1 :1 `uc 1 :1 `uc 1 ]
+[n S16 . GP0 GP1 GP2 GP3 ]
+"274
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 274: typedef union {
+[u S15 `S16 1 ]
+[n S15 . . ]
+"282
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 282: extern volatile GPIObits_t GPIObits __attribute__((address(0x006)));
+[v _GPIObits `VS15 ~T0 @X0 0 e@6 ]
+[v F167 `(v ~T0 @X0 1 tf1`ul ]
+"92 C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic.h
+[v __delay `JF167 ~T0 @X0 0 e ]
+[p i __delay ]
+"8 main.c
+[p x IOSCFS = 8MHZ ]
+"9
+[p x MCPU = OFF ]
+"10
+[p x WDTE = OFF ]
+"11
+[p x CP = OFF ]
+"12
+[p x MCLRE = OFF ]
+"54 C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 54: __asm("INDF equ 00h");
+[; <" INDF equ 00h ;# ">
+"74
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 74: __asm("TMR0 equ 01h");
+[; <" TMR0 equ 01h ;# ">
+"94
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 94: __asm("PCL equ 02h");
+[; <" PCL equ 02h ;# ">
+"114
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 114: __asm("STATUS equ 03h");
+[; <" STATUS equ 03h ;# ">
+"180
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 180: __asm("FSR equ 04h");
+[; <" FSR equ 04h ;# ">
+"200
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 200: __asm("OSCCAL equ 05h");
+[; <" OSCCAL equ 05h ;# ">
+"271
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 271: __asm("GPIO equ 06h");
+[; <" GPIO equ 06h ;# ">
+"309
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 309: __asm("ADCON0 equ 07h");
+[; <" ADCON0 equ 07h ;# ">
+"391
+[; ;C:\Program Files (x86)\Microchip\xc8\v2.05\pic\include\pic10f222.h: 391: __asm("ADRES equ 08h");
+[; <" ADRES equ 08h ;# ">
+[v $root$_main `(v ~T0 @X0 0 e ]
+"19 main.c
+[; ;main.c: 19: int main()
+[v _main `(i ~T0 @X0 1 ef ]
+"20
+[; ;main.c: 20: {
+{
+[e :U _main ]
+[f ]
+"21
+[; ;main.c: 21:   TRIS = 0x0E;
+[e = _TRIS -> -> 14 `i `uc ]
+"25
+[; ;main.c: 25:   GPIObits.GP0 = 0;
+[e = . . _GPIObits 0 0 -> -> 0 `i `uc ]
+"26
+[; ;main.c: 26:   char capteur1 = GPIObits.GP1;
+[v _capteur1 `uc ~T0 @X0 1 a ]
+[e = _capteur1 -> . . _GPIObits 0 1 `uc ]
+"27
+[; ;main.c: 27:   char capteur2 = GPIObits.GP2;
+[v _capteur2 `uc ~T0 @X0 1 a ]
+[e = _capteur2 -> . . _GPIObits 0 2 `uc ]
+"28
+[; ;main.c: 28:   char capteur3 = GPIObits.GP3;
+[v _capteur3 `uc ~T0 @X0 1 a ]
+[e = _capteur3 -> . . _GPIObits 0 3 `uc ]
+"29
+[; ;main.c: 29:   int count =0, i=0;
+[v _count `i ~T0 @X0 1 a ]
+[e = _count -> 0 `i ]
+[v _i `i ~T0 @X0 1 a ]
+[e = _i -> 0 `i ]
+"31
+[; ;main.c: 31:   while(1)
+[e :U 26 ]
+"32
+[; ;main.c: 32:   {
+{
+"33
+[; ;main.c: 33:     count =0;
+[e = _count -> 0 `i ]
+"34
+[; ;main.c: 34:     _delay((unsigned long)((200)*(8000000/4000.0)));
+[e ( __delay (1 -> * -> -> 200 `i `d / -> -> 8000000 `l `d .4000.0 `ul ]
+"35
+[; ;main.c: 35:     capteur1 = GPIObits.GP1;
+[e = _capteur1 -> . . _GPIObits 0 1 `uc ]
+"36
+[; ;main.c: 36:     capteur2 = GPIObits.GP2;
+[e = _capteur2 -> . . _GPIObits 0 2 `uc ]
+"37
+[; ;main.c: 37:     capteur3 = GPIObits.GP3;
+[e = _capteur3 -> . . _GPIObits 0 3 `uc ]
+"42
+[; ;main.c: 42:     if (capteur1 == 1)
+[e $ ! == -> _capteur1 `i -> 1 `i 28  ]
+"43
+[; ;main.c: 43:         count ++;
+[e ++ _count -> 1 `i ]
+[e :U 28 ]
+"45
+[; ;main.c: 45:     if (capteur2 == 1)
+[e $ ! == -> _capteur2 `i -> 1 `i 29  ]
+"46
+[; ;main.c: 46:         count ++;
+[e ++ _count -> 1 `i ]
+[e :U 29 ]
+"48
+[; ;main.c: 48:     if (capteur3 == 1)
+[e $ ! == -> _capteur3 `i -> 1 `i 30  ]
+"49
+[; ;main.c: 49:         count ++;
+[e ++ _count -> 1 `i ]
+[e :U 30 ]
+"52
+[; ;main.c: 52:     for (i=0; i < count; i++)
+{
+[e = _i -> 0 `i ]
+[e $U 34  ]
+[e :U 31 ]
+"53
+[; ;main.c: 53:     {
+{
+"54
+[; ;main.c: 54:         GPIObits.GP0 = 1;
+[e = . . _GPIObits 0 0 -> -> 1 `i `uc ]
+"55
+[; ;main.c: 55:         _delay((unsigned long)((100)*(8000000/4000.0)));
+[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 8000000 `l `d .4000.0 `ul ]
+"56
+[; ;main.c: 56:         GPIObits.GP0 = 0;
+[e = . . _GPIObits 0 0 -> -> 0 `i `uc ]
+"57
+[; ;main.c: 57:         _delay((unsigned long)((100)*(8000000/4000.0)));
+[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 8000000 `l `d .4000.0 `ul ]
+"58
+[; ;main.c: 58:     }
+}
+[e ++ _i -> 1 `i ]
+[e :U 34 ]
+[e $ < _i _count 31  ]
+[e :U 32 ]
+}
+"60
+[; ;main.c: 60:   }
+}
+[e :U 25 ]
+[e $U 26  ]
+[e :U 27 ]
+"61
+[; ;main.c: 61:   return 0;
+[e ) -> 0 `i ]
+[e $UE 24  ]
+"62
+[; ;main.c: 62: }
+[e :UE 24 ]
+}

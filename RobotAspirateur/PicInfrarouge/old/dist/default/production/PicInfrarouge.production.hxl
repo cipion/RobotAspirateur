@@ -1,0 +1,30 @@
+### HEXMate logfile and output summary ###
+### Memory Usage ###
+ Unused memory ranges:
+  6h - 2FDh
+  3FEh - 1FFDh
+  
+ dist/default/production\PicInfrarouge.production.hex ranges:
+  0h - 5h
+  2FEh - 3FDh
+  1FFEh - 1FFFh
+  
+### Hex Memory Map ###
+ Legend:
+  - = Unused memory
+  F = Filled ROM
+  S = Stored serial code
+  A = Stored ASCII string
+  R = Reserved for checksum
+  C = Stored checksum result
+  T = Trailing code
+  & = Find & replace opcode
+  X = Find & delete opcode
+  1 = dist/default/production\PicInfrarouge.production.hex
+00000000: 111111----------------------------------------------------------
+000002C0: --------------------------------------------------------------11
+00000300: 1111111111111111111111111111111111111111111111111111111111111111
+00000340: 1111111111111111111111111111111111111111111111111111111111111111
+00000380: 1111111111111111111111111111111111111111111111111111111111111111
+000003C0: 11111111111111111111111111111111111111111111111111111111111111--
+00001FC0: --------------------------------------------------------------11
