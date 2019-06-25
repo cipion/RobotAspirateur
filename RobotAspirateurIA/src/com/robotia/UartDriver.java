@@ -1,35 +1,13 @@
-/*
- * #%L
- * **********************************************************************
- * ORGANIZATION  :  Pi4J
- * PROJECT       :  Pi4J :: Java Examples
- * FILENAME      :  SerialExample.java
- *
- * This file is part of the Pi4J project. More information about
- * this project can be found here:  https://www.pi4j.com/
- * **********************************************************************
- * %%
- * Copyright (C) 2012 - 2019 Pi4J
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Lesser Public License for more details.
- *
- * You should have received a copy of the GNU General Lesser Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/lgpl-3.0.html>.
- * #L%
- */
+package com.robotia;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.pi4j.io.gpio.exception.UnsupportedBoardType;
 import com.pi4j.io.serial.Baud;
 import com.pi4j.io.serial.DataBits;
 import com.pi4j.io.serial.FlowControl;
@@ -41,8 +19,6 @@ import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
-import com.pi4j.util.CommandArgumentParser;
-import com.pi4j.util.Console;
 
 /**
  * This example code demonstrates how to perform serial communications using the
@@ -51,6 +27,18 @@ import com.pi4j.util.Console;
  * @author Robert Savage
  */
 public class UartDriver {
+
+    // create serial config object
+    private SerialConfig        config = new SerialConfig();
+
+    private String              retour;
+
+    private static final Logger logger = LoggerFactory.getLogger( UartDriver.class );
+
+    // create an instance of the serial communications class
+    final Serial                serial = SerialFactory.createInstance();
+
+    final static Boolean        isInit = false;
 
     /**
      * This example program supports the following optional command
@@ -63,8 +51,8 @@ public class UartDriver {
      * @throws InterruptedException
      * @throws IOException
      */
-    public static void main( String args[] ) throws InterruptedException, IOException {
-
+    public Boolean initUART()
+    {
         // !! ATTENTION !!
         // By default, the serial port is configured as a console port
         // for interacting with the Linux OS shell. If you want to use
@@ -75,43 +63,7 @@ public class UartDriver {
         // the OS console for this port:
         // https://www.cube-controls.com/2015/11/02/disable-serial-port-terminal-output-on-raspbian/
 
-        // create Pi4J console wrapper/helper
-        // (This is a utility class to abstract some of the boilerplate code)
-        final Console console = new Console();
-
-        // print program title/header
-        console.title( "<-- The Pi4J Project -->", "Serial Communication Example" );
-
-        // allow for user to exit program using CTRL-C
-        console.promptForExit();
-
-        // create an instance of the serial communications class
-        final Serial serial = SerialFactory.createInstance();
-
-        // create and register the serial data listener
-        serial.addListener( new SerialDataEventListener() {
-            @Override
-            public void dataReceived( SerialDataEvent event ) {
-
-                // NOTE! - It is extremely important to read the data received
-                // from the
-                // serial port. If it does not get read from the receive buffer,
-                // the
-                // buffer will continue to grow and consume memory.
-
-                // print out the data received to the console
-                try {
-                    console.println( "[HEX DATA]   " + event.getHexByteString() );
-                    console.println( "[ASCII DATA] " + event.getAsciiString() );
-                } catch ( IOException e ) {
-                    e.printStackTrace();
-                }
-            }
-        } );
-
         try {
-            // create serial config object
-            SerialConfig config = new SerialConfig();
 
             // set default serial settings (device, baud rate, flow control,
             // etc)
@@ -133,52 +85,146 @@ public class UartDriver {
 
             // parse optional command argument options to override the default
             // serial settings.
-            if ( args.length > 0 ) {
-                config = CommandArgumentParser.getSerialConfig( config, args );
-            }
+            // config = CommandArgumentParser.getSerialConfig( config, args );
 
-            // display connection details
-            console.box( " Connecting to: " + config.toString(),
-                    " We are sending ASCII data on the serial port every 1 second.",
-                    " Data received on serial port will be displayed below." );
-
-            // open the default serial device/port with the configuration
-            // settings
-            serial.open( config );
-
-            // continuous loop to keep the program running until the user
-            // terminates the program
-            while ( console.isRunning() ) {
-                try {
-                    // write a formatted string to the serial transmit buffer
-                    serial.write( "CURRENT TIME: " + new Date().toString() );
-
-                    // write a individual bytes to the serial transmit buffer
-                    serial.write( (byte) 13 );
-                    serial.write( (byte) 10 );
-
-                    // write a simple string to the serial transmit buffer
-                    serial.write( "Second Line" );
-
-                    // write a individual characters to the serial transmit
-                    // buffer
-                    serial.write( '\r' );
-                    serial.write( '\n' );
-
-                    // write a string terminating with CR+LF to the serial
-                    // transmit buffer
-                    serial.writeln( "Third Line" );
-                } catch ( IllegalStateException ex ) {
-                    ex.printStackTrace();
-                }
-
-                // wait 1 second before continuing
-                Thread.sleep( 1000 );
-            }
+            return true;
 
         } catch ( IOException ex ) {
-            console.println( " ==>> SERIAL SETUP FAILED : " + ex.getMessage() );
-            return;
+
+            return false;
+        } catch ( UnsupportedBoardType e ) {
+            // TODO Auto-generated catch block
+
+            e.printStackTrace();
+            return false;
+        } catch ( InterruptedException e ) {
+            // TODO Auto-generated catch block
+
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+
+    public String getDetectionObstacle() {
+
+        retour = "null";
+
+        if ( !isInit )
+        {
+            return "Error, UART not init";
+        }
+
+        // create and register the serial data listener
+        serial.addListener( new SerialDataEventListener() {
+
+            @Override
+            public void dataReceived( SerialDataEvent event ) {
+
+                // NOTE! - It is extremely important to read the data received
+                // from the
+                // serial port. If it does not get read from the receive buffer,
+                // the
+                // buffer will continue to grow and consume memory.
+                byte[] arrayByte = new byte[4];
+                Arrays.fill( arrayByte, (byte) 0 );
+
+                try {
+                    logger.info( "UartDriver : nombre de bit recu = " + event.length() + " (" + event.toString() + ")" );
+
+                    arrayByte = event.getBytes();
+
+                } catch ( IOException e ) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+                int i = 1;
+                for ( byte bit : arrayByte )
+                {
+                    logger.info( "UartDriver : Capteur" + i + " = " + bit );
+                    i++;
+                }
+
+                retour = event.toString();
+
+            }
+        } );
+
+        return retour;
+    }
+
+    public String getDetectionObstacle( int timeout ) {
+
+        if ( !isInit )
+        {
+            return "Error, UART not init";
+        }
+
+        // create and register the serial data listener
+        serial.addListener( new SerialDataEventListener() {
+            @Override
+            public void dataReceived( SerialDataEvent event ) {
+
+                // NOTE! - It is extremely important to read the data received
+                // from the
+                // serial port. If it does not get read from the receive buffer,
+                // the
+                // buffer will continue to grow and consume memory.
+
+            }
+        } );
+
+        return "null";
+    }
+
+    public Boolean setDetectionObstacle() {
+
+        if ( !isInit )
+        {
+            return false;
+        }
+
+        // open the default serial device/port with the configuration
+        // settings
+        try {
+            this.serial.open( config );
+        } catch ( IOException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        // continuous loop to keep the program running until the user
+        // terminates the program
+
+        try {
+            // write a formatted string to the serial transmit buffer
+            this.serial.write( "CURRENT TIME: " + new Date().toString() );
+
+            // write a individual bytes to the serial transmit buffer
+            this.serial.write( (byte) 13 );
+            this.serial.write( (byte) 10 );
+
+            // write a simple string to the serial transmit buffer
+            this.serial.write( "Second Line" );
+
+            // write a individual characters to the serial transmit
+            // buffer
+            serial.write( '\r' );
+            serial.write( '\n' );
+
+            // write a string terminating with CR+LF to the serial
+            // transmit buffer
+            serial.writeln( "Third Line" );
+
+            return true;
+        } catch ( IllegalStateException ex ) {
+            ex.printStackTrace();
+            return false;
+        } catch ( IOException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
         }
     }
 }

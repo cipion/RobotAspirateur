@@ -29,10 +29,10 @@ public class DriverManager {
     private static final Logger  logger   = LoggerFactory.getLogger( DriverManager.class );
 
     private String               dossierDriverMoteur;
-    private String               dossierDriverCapteur;
+    // private String dossierDriverCapteur;
     private String               executableDriverMoteur;
-    private String               executableDriverCapteur;
-    private String               fihierLogDriverCapteur;
+    // private String executableDriverCapteur;
+    // private String fihierLogDriverCapteur;
     private String               fihierLogDriverMoteur;
 
     /****
@@ -44,11 +44,14 @@ public class DriverManager {
 
         bundle = ResourceBundle.getBundle( "config" );
         dossierDriverMoteur = bundle.getString( "driver.dossierDriverMoteur" );
-        dossierDriverCapteur = bundle.getString( "driver.dossierDriverCapteur" );
+        // dossierDriverCapteur = bundle.getString(
+        // "driver.dossierDriverCapteur" );
         executableDriverMoteur = bundle.getString( "driver.executableDriverMoteur" );
-        executableDriverCapteur = bundle.getString( "driver.executableDriverCapteur" );
+        // executableDriverCapteur = bundle.getString(
+        // "driver.executableDriverCapteur" );
         fihierLogDriverMoteur = bundle.getString( "driver.fihierLogDriverMoteur" );
-        fihierLogDriverCapteur = bundle.getString( "driver.fihierLogDriverCapteur" );
+        // fihierLogDriverCapteur = bundle.getString(
+        // "driver.fihierLogDriverCapteur" );
     }
 
     /****
@@ -73,8 +76,9 @@ public class DriverManager {
         runCommande = "./" + executableDriverMoteur + " > " + fihierLogDriverMoteur;
         retour = executeCommand( runCommande, dossierDriverMoteur );
 
-        runCommande = "./" + executableDriverCapteur + " > " + fihierLogDriverCapteur;
-        retour = executeCommand( runCommande, dossierDriverCapteur );
+        // runCommande = "./" + executableDriverCapteur + " > " +
+        // fihierLogDriverCapteur;
+        // retour = executeCommand( runCommande, dossierDriverCapteur );
 
         logger.info( "runAllDriver : Drivers démarrés" );
         return true;
@@ -103,15 +107,15 @@ public class DriverManager {
      * 
      * @return
      */
-    public Boolean restartDriverCapteur()
-    {
-        String retour;
-
-        runCommande = "./" + executableDriverCapteur + " > " + fihierLogDriverCapteur;
-        retour = executeCommand( runCommande, dossierDriverCapteur );
-
-        return true;
-    }
+    /*
+     * public Boolean restartDriverCapteur() { String retour;
+     * 
+     * runCommande = "./" + executableDriverCapteur + " > " +
+     * fihierLogDriverCapteur; retour = executeCommand( runCommande,
+     * dossierDriverCapteur );
+     * 
+     * return true; }
+     */
 
     /****
      * methode qui execute la commandes envoyées en parametre sur l'OS linux
@@ -156,7 +160,7 @@ public class DriverManager {
     public Boolean stopAllDriver()
     {
 
-        return stopDriverMoteur() && stopDriverCapteur();
+        return stopDriverMoteur(); // && stopDriverCapteur();
 
     }
 
@@ -176,9 +180,9 @@ public class DriverManager {
      * 
      * @return
      */
-    public Boolean stopDriverCapteur()
-    {
-        return null;
-
-    }
+    /*
+     * public Boolean stopDriverCapteur() { return null;
+     * 
+     * }
+     */
 }

@@ -2,10 +2,8 @@ package com.robotia;
 
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +27,10 @@ public class GestionMouvement {
     private Boolean             rotationEnCours     = false;
     private Boolean             ajoutDesPas         = true;
 
-    private int                 nbPasDecalage       = 0;                                                // on
+    private int                 nbPasDecalage       = 0;
+    private UartDriver          uart                = new UartDriver();
 
+    // on
     // ajoute
     // ou
     // soustrait
@@ -54,6 +54,15 @@ public class GestionMouvement {
         timeoutRotation = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutRotation" ) );
         timeoutDecalage = Integer.parseInt( bundle.getString( "gestionMouvement.timeoutDecalage" ) );
         nbPasDecalage = Integer.parseInt( bundle.getString( "gestionMouvement.nbPasDecalage" ) );
+
+        if ( uart.initUART() )
+        {
+            logger.info( "GestionMouvement : UART initialisé" );
+        }
+        else
+        {
+            logger.error( "GestionMouvement : ERREUR d'initialisation de l'UART" );
+        }
     }
 
     /****
@@ -201,15 +210,14 @@ public class GestionMouvement {
     private Boolean arretRobot()
     {
 
-        String retour1 = socket.stopDetection();
-        String retour2 = socket.setDriverMoteurStatut( Commandes.STOP, 0, 0 );
+        String retour = socket.setDriverMoteurStatut( Commandes.STOP, 0, 0 );
 
-        logger.info( "arretRobot : arret des Capteur =" + retour1 + ", arret des moteur =" + retour2 );
+        logger.info( "arretRobot :  arret des moteur =" + retour );
 
-        if ( !retour2.equals( "-1" ) )
+        if ( !retour.equals( "-1" ) )
         {
             String delims = "[;]";
-            String[] tokens = retour2.split( delims );
+            String[] tokens = retour.split( delims );
             int mot1 = Integer.parseInt( tokens[0] );
             int mot2 = Integer.parseInt( tokens[1] );
 
@@ -252,48 +260,10 @@ public class GestionMouvement {
         FutureTask<String> timeoutTask = null;
         Boolean statut = false;
 
-        timeoutTask = new FutureTask<String>( new Callable<String>() {
+        logger.debug( "detectionObstacle : lancement des detections des capteurs sans timeout " );
+        String msg = uart.getDetectionObstacle();
 
-            @Override
-            public String call() throws Exception {
-                logger.debug( "detectionObstacle : lancement des detections des capteurs sans timeout " );
-                String msg = socket.getDetectionObstacle();
-
-                return msg;
-            }
-        } );
-
-        new Thread( timeoutTask ).start();
-
-        while ( !timeoutTask.isDone() )
-        {
-            // logger.info( "Test cancel =" + continuerTraitement );
-            if ( !continuerTraitement || stopDetection )
-            {
-                statut = timeoutTask.cancel( true );
-                logger.info( "detectionObstacle :  continuerTraitement =" + continuerTraitement
-                        + ", stopDetection =" + stopDetection );
-                logger.info( "detectionObstacle :  Demande d'arret du traitement =" + statut );
-            }
-
-        }
-
-        if ( statut )
-        {
-            logger.info( "detectionObstacle : Fonction getDetectionObstacle arretée" );
-            return 1;
-        }
-        else if ( timeoutTask.isDone() )
-        {
-            logger.info( "detectionObstacle : Arret normal du thread de detection (obstacle détecté), thread arreté" );
-            return 0;
-        }
-        else
-        {
-            logger.error( "detectionObstacle : Erreur d'arret de la fonction " );
-            continuerTraitement = false;
-            return -1;
-        }
+        return -1;
 
     }
 
@@ -380,61 +350,11 @@ public class GestionMouvement {
         FutureTask<String> timeoutTask = null;
         String msg = "-3";
 
-        try {
-            timeoutTask = new FutureTask<String>( new Callable<String>() {
+        logger.debug( "detectionObstacle : lancement des detections des capteurs avec timeout ="
+                + timeoutRotation );
+        msg = uart.getDetectionObstacle( timeoutRotation );
 
-                @Override
-                public String call() throws Exception {
-                    logger.debug( "detectionObstacle : lancement des detections des capteurs avec timeout ="
-                            + timeoutRotation );
-                    String msg = socket.getDetectionObstacle( timeoutRotation );
-
-                    if ( msg.contains( "TIMEOUT" ) )
-                    {
-                        return "-1";
-                    }
-                    else
-                        return msg;
-                }
-            } );
-
-            new Thread( timeoutTask ).start();
-            msg = timeoutTask.get( timeout, TimeUnit.SECONDS );
-
-        } catch ( InterruptedException e ) {
-
-        } catch ( ExecutionException e ) {
-            logger.error( "detectionObstacle : Erreur d'execussion de la detection d'obstacle : " + e.toString() );
-            return -1;
-
-        } catch ( TimeoutException e ) {
-            logger.debug( "detectionObstacle : Timeout dépassé, pas d'obstacle detecté :" + e.toString() );
-            // socket.fctRestartSocketCapteur();
-            return -2;
-        }
-
-        socket.stopDetection();
-        if ( msg.equals( "-1" ) )
-        {
-            logger.error( "detectionObstacle : Erreur, le driver de capteur à rencontré un probleme" );
-            return -1;
-        }
-        else if ( msg.equals( "-2" ) )
-        {
-            logger.error( "detectionObstacle : Erreur d'execution de connexion au driver" );
-            continuerTraitement = false;
-            return -1;
-        }
-        else if ( msg.equals( "-3" ) )
-        {
-            logger.error( "detectionObstacle : Erreur d'execution du tread de timeout" );
-            return -1;
-        }
-        else
-        {
-            logger.debug( "detectionObstacle : Obstacle detecté : " + msg );
-            return 0;
-        }
+        return 1;
 
     }
 
